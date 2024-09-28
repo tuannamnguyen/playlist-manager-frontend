@@ -1,22 +1,42 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import SearchView from '../views/SearchView.vue'
-import LibraryView from '../views/LibraryView.vue'
+import CallbackPage from '@/views/auth/CallbackPage.vue';
+import LibraryView from '@/views/LibraryView.vue';
+import { authGuard } from "@auth0/auth0-vue";
+import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      component: HomeView
+      name: 'home',
+      component: HomeView,
+      beforeEnter: authGuard,
     },
     {
-      path: '/search',
-      component: SearchView
+      path: "/playlists/:id",
+      name: "PlaylistDetails",
+      component: LibraryView,
+      props: true,
+      beforeEnter: authGuard,
     },
     {
-      path: '/library',
-      component: LibraryView
+      path: "/playlists/create",
+      name: "CreatePlaylist",
+      component: LibraryView,
+      beforeEnter: authGuard,
+    },
+    {
+      path: "/playlists/user",
+      name: "UserPlaylists",
+      component: LibraryView,
+      beforeEnter: authGuard,
+    },
+    {
+      path: "/callback",
+      name: "Callback",
+      component: CallbackPage
     }
   ]
 })
