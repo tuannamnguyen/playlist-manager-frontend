@@ -8,14 +8,13 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import { useAuth0 } from "@auth0/auth0-vue";
+import getAllPlaylists from './composables/getAllPlaylists';
 
 import { useSongStore } from './stores/song'
 import { storeToRefs } from 'pinia';
 const useSong = useSongStore()
 const { isPlaying, currentTrack } = storeToRefs(useSong)
 const { logout, user } = useAuth0();
-
-
 
 const handleLogout = () =>
     logout({
@@ -24,10 +23,25 @@ const handleLogout = () =>
         }
     });
 
-onMounted(() => { isPlaying.value = false })
+onMounted(() => {
+    isPlaying.value = false;
+    fetchPlaylists();
+})
 
 let openMenu = ref(false)
+
+// New code for fetching playlists
+const playlists = ref([]);
+const fetchPlaylists = async () => {
+    const { error, isPending, playlists: fetchedPlaylists } = await getAllPlaylists(user.value.sub);
+    if (!error.value) {
+        playlists.value = fetchedPlaylists.value;
+    } else {
+        console.error('Error fetching playlists:', error.value);
+    }
+};
 </script>
+
 
 <template>
     <div>
@@ -56,6 +70,7 @@ let openMenu = ref(false)
                 class="bg-black hover:bg-[#282828] rounded-full p-0.5 mr-8 mt-0.5 cursor-pointer">
                 <div class="flex items-center">
                     <img class="rounded-full" width="27" :src="user.picture" alt="User profile">
+                    <div class="text-white text-[14px] ml-1.5 font-semibold">{{ user.name }}</div>
                     <ChevronDown v-if="!openMenu" @click="openMenu = true" fillColor="#FFFFFF" :size="25" />
                     <ChevronUp v-else @click="openMenu = false" fillColor="#FFFFFF" :size="25" />
                 </div>
@@ -88,10 +103,10 @@ let openMenu = ref(false)
             </ul>
             <div class="border-b border-b-gray-700"></div>
             <ul>
-                <li class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">My Playlist #1</li>
-                <li class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">My Playlist #2</li>
-                <li class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">My Playlist #3</li>
-                <li class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">My Playlist #4</li>
+                <li v-for="playlist in playlists" :key="playlist.playlist_id"
+                    class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">
+                    {{ playlist.playlist_name }}
+                </li>
             </ul>
         </div>
     </div>
