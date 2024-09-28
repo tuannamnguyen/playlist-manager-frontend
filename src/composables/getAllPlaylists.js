@@ -2,32 +2,31 @@ import { ref } from "vue";
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
-const deleteSongsFromPlaylist = async (playlistId, songIds) => {
+const getAllPlaylists = async (userId = null) => {
     const error = ref(null);
     const isPending = ref(true);
-    const updatedPlaylist = ref(null);
+    const playlists = ref([]);
 
     try {
-        const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/songs`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ songs_id: songIds }),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to delete songs from playlist');
+        let url = `${apiServerUrl}/api/playlists`;
+        if (userId) {
+            url += `?user_id=${encodeURIComponent(userId)}`;
         }
-        updatedPlaylist.value = await response.json();
-        console.log('Deleted songs from playlist:', updatedPlaylist.value);
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to fetch playlists');
+        }
+        playlists.value = await response.json();
+        console.log('Fetched playlists:', playlists.value);
     } catch (err) {
-        console.error('Error deleting songs from playlist:', err);
-        error.value = 'Could not delete songs from playlist';
+        console.error('Error fetching playlists:', err);
+        error.value = 'Could not fetch playlists';
     } finally {
         isPending.value = false;
     }
 
-    return { error, isPending, updatedPlaylist };
+    return { error, isPending, playlists };
 };
 
-export default deleteSongsFromPlaylist;
+export default getAllPlaylists;
