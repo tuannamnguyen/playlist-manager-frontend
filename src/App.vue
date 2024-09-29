@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import MenuItem from './components/MenuItem.vue';
 import MusicPlayer from './components/MusicPlayer.vue'
@@ -25,21 +25,31 @@ const handleLogout = () =>
 
 onMounted(() => {
     isPlaying.value = false;
-    fetchPlaylists();
 })
 
 let openMenu = ref(false)
 
-// New code for fetching playlists
+// Updated code for fetching playlists
 const playlists = ref([]);
 const fetchPlaylists = async () => {
-    const { error, isPending, playlists: fetchedPlaylists } = await getAllPlaylists(user.value.sub);
-    if (!error.value) {
-        playlists.value = fetchedPlaylists.value;
+    if (user.value && user.value.sub) {
+        const { error, isPending, playlists: fetchedPlaylists } = await getAllPlaylists(user.value.sub);
+        if (!error.value) {
+            playlists.value = fetchedPlaylists.value;
+        } else {
+            console.error('Error fetching playlists:', error.value);
+        }
     } else {
-        console.error('Error fetching playlists:', error.value);
+        console.log('User data not available yet');
     }
 };
+
+// Watch for changes in the user object
+watch(() => user.value, (newUser) => {
+    if (newUser && newUser.sub) {
+        fetchPlaylists();
+    }
+}, { immediate: true });
 </script>
 
 
