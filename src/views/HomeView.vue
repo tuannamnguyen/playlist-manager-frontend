@@ -37,13 +37,15 @@ onMounted(async () => {
         <div v-else-if="playlists.length === 0" class="text-white">Loading playlists...</div>
 
         <div v-else class="flex items-center flex-wrap">
-            <HomeCard v-for="playlist in playlists" :key="playlist.playlist_id"
-                image="https://picsum.photos/id/30/300/300" :title="playlist.playlist_name"
-                :subTitle="playlist.playlist_description || 'No description available'" class="m-2" :class="{
-                    'md:block hidden': playlist.playlist_id === 3,
-                    'lg:block hidden': playlist.playlist_id === 4,
-                    'xl:block hidden': playlist.playlist_id === 5
-                }" />
+            <router-link v-for="playlist in playlists" :key="playlist.playlist_id"
+                :to="{ name: 'PlaylistDetails', params: { id: playlist.playlist_id } }" class="m-2">
+                <HomeCard image="https://picsum.photos/id/30/300/300" :title="playlist.playlist_name"
+                    :subTitle="playlist.playlist_description || 'No description available'" :class="{
+                        'md:block hidden': playlist.playlist_id === 3,
+                        'lg:block hidden': playlist.playlist_id === 4,
+                        'xl:block hidden': playlist.playlist_id === 5
+                    }" />
+            </router-link>
         </div>
     </div>
 </template>
