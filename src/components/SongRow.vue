@@ -32,6 +32,8 @@ onMounted(() => {
 </script>
 
 <template>
+    <p class="text-white">{{ song }}</p>
+
     <ol>
         <li class="flex items-center justify-between rounded-md hover:bg-[#2A2929]" @mouseenter="isHover = true"
             @mouseleave="isHover = false">
@@ -45,16 +47,15 @@ onMounted(() => {
                     <Pause v-else fillColor="#FFFFFF" :size="25" @click="useSong.playOrPauseSong()" />
                 </div>
                 <div v-else class="text-white font-semibold w-[40px] ml-5">
-                    <span :class="{ 'text-green-500': currentTrack && currentTrack.name === track.name }">
+                    <span>
                         {{ index }}
                     </span>
                 </div>
                 <div>
-                    <div :class="{ 'text-green-500': currentTrack && currentTrack.name === track.name }"
-                        class="text-white font-semibold">
-                        {{ track.name }}
+                    <div class="text-white font-semibold">
+                        {{ song.song_name }}
                     </div>
-                    <div class="text-sm font-semibold text-gray-400">{{ artist.name }}</div>
+                    <div class="text-sm font-semibold text-gray-400">{{ song.artist_names }}</div>
                 </div>
             </div>
             <div class="flex items-center">
