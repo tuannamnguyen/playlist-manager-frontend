@@ -1,5 +1,5 @@
 import CallbackPage from '@/views/auth/CallbackPage.vue';
-import LibraryView from '@/views/LibraryView.vue';
+import PlaylistDetailsView from '@/views/PlaylistDetailsView.vue';
 import { authGuard } from "@auth0/auth0-vue";
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
@@ -17,20 +17,20 @@ const router = createRouter({
     {
       path: "/playlists/:id",
       name: "PlaylistDetails",
-      component: LibraryView,
+      component: PlaylistDetailsView,
       props: true,
       beforeEnter: authGuard,
     },
     {
       path: "/playlists/create",
       name: "CreatePlaylist",
-      component: LibraryView,
+      component: PlaylistDetailsView,
       beforeEnter: authGuard,
     },
     {
       path: "/playlists/user",
       name: "UserPlaylists",
-      component: LibraryView,
+      component: PlaylistDetailsView,
       beforeEnter: authGuard,
     },
     {

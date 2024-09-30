@@ -70,9 +70,6 @@ onMounted(() => {
             </div>
         </div>
         <div class="flex items-center">
-            <button type="button" v-if="isHover">
-                <Heart fillColor="#1BD760" :size="22"/>
-            </button>
             <div
                 v-if="isTrackTime"
                 class="text-xs mx-5 text-gray-400"

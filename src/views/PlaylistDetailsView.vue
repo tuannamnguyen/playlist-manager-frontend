@@ -6,6 +6,9 @@ import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 import Heart from 'vue-material-design-icons/Heart.vue';
 import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutline.vue';
 import artist from '../artist.json'
+import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
+import { useRoute } from 'vue-router';
+import { onMounted } from 'vue';
 
 import { useSongStore } from '../stores/song'
 import { storeToRefs } from 'pinia';
@@ -19,6 +22,17 @@ const playFunc = () => {
     }
     useSong.playFromFirst()
 }
+
+const route = useRoute();
+const playlistId = route.params.id;
+
+onMounted(async () => {
+    try {
+        const songs = await getSongsInPlaylist(playlistId);
+    } catch (error) {
+        console.error('Failed to fetch playlist songs:', error);
+    }
+});
 </script>
 
 <template>
@@ -44,7 +58,7 @@ const playFunc = () => {
                 </div>
 
                 <div class="text-gray-300 text-[13px] flex">
-                    <div class="flex">Album</div>
+                    <div class="flex">Playlist</div>
                     <div class="ml-2 flex">
                         <div class="circle mt-2 mr-2" />
                         <span class="-ml-0.5">{{ artist.releaseYear }}</span>
