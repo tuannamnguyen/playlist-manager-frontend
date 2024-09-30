@@ -30,6 +30,7 @@ const playlistId = route.params.id;
 
 const error = ref(null);
 const songs = ref([]);
+const isPending = ref(false);
 const playlist = ref({});
 const { user } = useAuth0();
 
@@ -108,8 +109,8 @@ const ownership = computed(() => {
         </div>
         <div class="border-b border-b-[#2A2A2A] mt-2"></div>
         <div class="mb-4"></div>
-        <ul class="w-full" v-for="track, index in artist.tracks" :key="track">
-            <SongRow :artist="artist" :track="track" :song="songs[index]" :index="++index" />
+        <ul class="w-full" v-for="song, index in songs" :key="song.song_id">
+            <SongRow :song="song" :index="++index" />
         </ul>
     </div>
 </template>

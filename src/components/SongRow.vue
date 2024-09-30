@@ -2,68 +2,84 @@
 import { onMounted, ref, toRefs } from 'vue';
 import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
-
 import { storeToRefs } from 'pinia';
 import { useSongStore } from '../stores/song';
+
 const useSong = useSongStore()
 const { isPlaying, currentTrack } = storeToRefs(useSong)
 
 let isHover = ref(false)
 let isTrackTime = ref(null)
+let formattedDate = ref('')
 
 const props = defineProps({
     song: Object,
-    track: Object,
-    artist: Object,
     index: Number,
 })
 
-const { track, artist, index } = toRefs(props)
+const { song, index } = toRefs(props)
 
 onMounted(() => {
-    const audio = new Audio(track.value.path);
-    audio.addEventListener('loadedmetadata', function () {
-        const duration = audio.duration;
+    if (song.value && song.value.duration) {
+        const durationInMS = song.value.duration;
+        let duration = durationInMS / 1000;
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
         isTrackTime.value = minutes + ':' + seconds.toString().padStart(2, '0')
-    });
+    } else {
+        console.warn('Song duration not available');
+        isTrackTime.value = '--:--';
+    }
+
+    if (song.value && song.value.created_at) {
+        const date = new Date(song.value.created_at);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 7) {
+            formattedDate.value = diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+        } else {
+            formattedDate.value = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    }
 })
 </script>
 
 <template>
-    <p class="text-white">{{ song }}</p>
-
-    <ol>
-        <li class="flex items-center justify-between rounded-md hover:bg-[#2A2929]" @mouseenter="isHover = true"
-            @mouseleave="isHover = false">
-            <div class="flex items-center w-full py-1.5">
-                <div v-if="isHover" class="w-[40px] ml-[14px] mr-[6px] cursor-pointer">
-                    <Play v-if="!isPlaying" fillColor="#FFFFFF" :size="25"
-                        @click="useSong.playOrPauseThisSong(artist, track)" />
-                    <Play v-else-if="isPlaying && currentTrack.name !== track.name" fillColor="#FFFFFF" :size="25"
-                        @click="useSong.loadSong(artist, track)" />
-
-                    <Pause v-else fillColor="#FFFFFF" :size="25" @click="useSong.playOrPauseSong()" />
+    <li class="flex items-center justify-between rounded-md hover:bg-[#2A2929] px-4 py-2" @mouseenter="isHover = true"
+        @mouseleave="isHover = false">
+        <div class="flex items-center w-full">
+            <div class="text-gray-400 font-semibold w-[30px] text-right mr-4">
+                {{ index }}
+            </div>
+            <img :src="song.image_url" alt="Album Cover" class="w-10 h-10 mr-4 rounded">
+            <div class="flex-grow">
+                <div class="text-white font-semibold">
+                    {{ song.song_name }}
                 </div>
-                <div v-else class="text-white font-semibold w-[40px] ml-5">
-                    <span>
-                        {{ index }}
-                    </span>
-                </div>
-                <div>
-                    <div class="text-white font-semibold">
-                        {{ song.song_name }}
-                    </div>
-                    <div class="text-sm font-semibold text-gray-400">{{ song.artist_names }}</div>
+                <div class="text-sm text-gray-400">
+                    {{ song.artist_names.join(', ') }}
                 </div>
             </div>
-            <div class="flex items-center">
-                <div v-if="isTrackTime" class="text-xs mx-5 text-gray-400">
-                    {{ isTrackTime }}
-                </div>
+            <div class="text-sm text-gray-400 w-1/4">
+                {{ song.album_name }}
             </div>
-        </li>
-    </ol>
-
+            <div class="text-sm text-gray-400 w-1/5">
+                {{ formattedDate }}
+            </div>
+            <div class="text-sm text-gray-400 w-[50px] text-right">
+                {{ isTrackTime }}
+            </div>
+        </div>
+    </li>
 </template>
+
+<style scoped>
+li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+li:last-child {
+    border-bottom: none;
+}
+</style>
