@@ -64,12 +64,13 @@ const ownership = computed(() => {
 
 <template>
     <div class="p-8 overflow-x-hidden">
+        <!-- Existing playlist header content -->
         <div class="py-1.5"></div>
         <div class="flex items-center w-full relative h-full">
             <img width="140" :src="artist.albumCover">
 
             <div class="w-full ml-5">
-                <div style=" font-size: 33px;"
+                <div style="font-size: 33px;"
                     class="text-white absolute w-full hover:underline cursor-pointer top-0 font-bosemiboldld">
                     {{ playlist.playlist_name }}
                 </div>
@@ -98,19 +99,20 @@ const ownership = computed(() => {
         </div>
 
         <div class="mt-6"></div>
-        <div class="flex items-center justify-between px-5 pt-2">
-            <div class="flex items-center justify-between text-gray-400">
-                <div class="mr-7">#</div>
-                <div class="text-sm">Title</div>
-            </div>
-            <div>
+        <!-- Updated header for song list -->
+        <div class="flex items-center justify-between px-4 pt-2 text-gray-400 text-sm">
+            <div class="w-[30px] text-right mr-4">#</div>
+            <div class="flex-grow">Title</div>
+            <div class="w-1/4">Album</div>
+            <div class="w-1/5">Date added</div>
+            <div class="w-[50px] text-right">
                 <ClockTimeThreeOutline fillColor="#FFFFFF" :size="18" />
             </div>
         </div>
         <div class="border-b border-b-[#2A2A2A] mt-2"></div>
         <div class="mb-4"></div>
-        <ul class="w-full" v-for="song, index in songs" :key="song.song_id">
-            <SongRow :song="song" :index="++index" />
+        <ul class="w-full">
+            <SongRow v-for="(song, index) in songs" :key="song.song_id" :song="song" :index="index + 1" />
         </ul>
     </div>
 </template>
