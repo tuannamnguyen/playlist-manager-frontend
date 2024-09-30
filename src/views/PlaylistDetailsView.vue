@@ -108,8 +108,9 @@ const ownership = computed(() => {
         </div>
         <div class="border-b border-b-[#2A2A2A] mt-2"></div>
         <div class="mb-4"></div>
+        <p class="text-white">{{ songs }}</p>
         <ul class="w-full" v-for="track, index in artist.tracks" :key="track">
-            <SongRow :artist="artist" :track="track" :index="++index" />
+            <SongRow :artist="artist" :track="track" :song="song" :index="++index" />
         </ul>
     </div>
 </template>
