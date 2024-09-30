@@ -63,30 +63,21 @@ const ownership = computed(() => {
 
 <template>
     <div class="p-8 overflow-x-hidden">
-        <button type="button" class="text-white text-2xl font-semibold hover:underline cursor-pointer">
-            {{ artist.name }}
-        </button>
-
         <div class="py-1.5"></div>
         <div class="flex items-center w-full relative h-full">
             <img width="140" :src="artist.albumCover">
 
             <div class="w-full ml-5">
-
-                <div style="font-size: 33px;"
+                <div style=" font-size: 33px;"
                     class="text-white absolute w-full hover:underline cursor-pointer top-0 font-bosemiboldld">
-                    {{ artist.name }}
+                    {{ playlist.playlist_name }}
                 </div>
 
                 <div class="text-gray-300 text-[13px] flex">
                     <div class="flex">Playlist</div>
                     <div class="ml-2 flex">
                         <div class="circle mt-2 mr-2" />
-                        <span class="-ml-0.5">{{ artist.releaseYear }}</span>
-                    </div>
-                    <div class="ml-2 flex">
-                        <div class="circle mt-2 mr-2" />
-                        <span class="-ml-0.5">{{ artist.tracks.length }} songs</span>
+                        <span class="-ml-0.5">{{ songs.length }} songs</span>
                     </div>
                 </div>
 
