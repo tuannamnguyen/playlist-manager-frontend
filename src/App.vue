@@ -96,16 +96,13 @@ watch(() => user.value, (newUser) => {
 
 
         <div id="SideNav" class="h-[100%] p-6 w-[240px] fixed z-50 bg-black">
-            <RouterLink to="/">
-                <img width="125" src="/images/icons/spotify-logo.png">
+            <RouterLink to="/" class="text-white text-2xl font-semibold hover:underline cursor-pointer">
+                Playlist manager
             </RouterLink>
             <div class="my-8"></div>
             <ul>
                 <RouterLink to="/">
                     <MenuItem class="ml-[1px]" :iconSize="23" name="Home" iconString="home" pageUrl="/" />
-                </RouterLink>
-                <RouterLink to="/search">
-                    <MenuItem class="ml-[1px]" :iconSize="24" name="Search" iconString="search" pageUrl="/search" />
                 </RouterLink>
                 <div class="py-3.5"></div>
                 <MenuItem :iconSize="24" name="Create Playlist" iconString="playlist" pageUrl="/playlist" />

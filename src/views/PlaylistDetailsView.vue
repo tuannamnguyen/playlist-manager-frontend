@@ -13,6 +13,8 @@ import { useRoute } from 'vue-router';
 import artist from '../artist.json';
 import SongRow from '../components/SongRow.vue';
 import { useSongStore } from '../stores/song';
+import addSongsToPlaylist from '@/composables/addSongsToPlaylist';
+import searchSongs from '@/composables/search';
 
 const useSong = useSongStore()
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)

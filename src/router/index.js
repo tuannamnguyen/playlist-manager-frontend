@@ -28,12 +28,6 @@ const router = createRouter({
       beforeEnter: authGuard,
     },
     {
-      path: "/playlists/user",
-      name: "UserPlaylists",
-      component: PlaylistDetailsView,
-      beforeEnter: authGuard,
-    },
-    {
       path: "/callback",
       name: "Callback",
       component: CallbackPage
