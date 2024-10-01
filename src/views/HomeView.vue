@@ -40,7 +40,7 @@ onMounted(async () => {
             <router-link v-for="playlist in playlists" :key="playlist.playlist_id"
                 :to="{ name: 'PlaylistDetails', params: { id: playlist.playlist_id } }" class="m-2">
                 <HomeCard image="https://picsum.photos/id/30/300/300" :title="playlist.playlist_name"
-                    :subTitle="playlist.playlist_description || 'No description available'" :class="{
+                    :subTitle="playlist.playlist_description || 'No description available'" :user="playlist.user_name" :class="{
                         'md:block hidden': playlist.playlist_id === 3,
                         'lg:block hidden': playlist.playlist_id === 4,
                         'xl:block hidden': playlist.playlist_id === 5
