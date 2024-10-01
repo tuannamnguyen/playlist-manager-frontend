@@ -222,10 +222,12 @@ const isSongSelected = (song) => {
                     <button @click="performSearch"
                         class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold">Search</button>
                 </div>
+                <div class="bg-[#3E3E3E] text-white p-4 rounded-md mb-4 text-sm">
+                    <strong>Tip:</strong> For better conversion results, choose songs with an ISRC when available to help make conversion process more precise.
+                </div>
                 <div class="max-h-80 overflow-y-auto">
-                    <div v-for="song in searchResults" :key="generateSongKey(song)"
+                    <div v-for="song in searchResults.value" :key="generateSongKey(song)"
                         class="flex items-center justify-between py-2 hover:bg-[#3E3E3E] px-4 rounded">
-                        <!-- <div class="text-white">{{ song }}</div> -->
                         <div class="flex items-center">
                             <img :src="song.image_url || '/path/to/default-album-cover.jpg'"
                                 :alt="`${song.song_name || 'Unknown Song'} cover`"
@@ -235,6 +237,9 @@ const isSongSelected = (song) => {
                                 <div class="text-gray-400 text-sm">{{ formatArtists(song.artist_names) }}</div>
                                 <div class="text-gray-500 text-xs">
                                     {{ song.album_name || 'Unknown Album' }} • {{ formatDuration(song.duration) }}
+                                </div>
+                                <div class="text-gray-500 text-xs mt-1">
+                                    ISRC: {{ song.isrc || 'Not available' }}
                                 </div>
                             </div>
                         </div>
