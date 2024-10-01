@@ -106,12 +106,6 @@ const performSearch = async () => {
     }
 };
 
-const formatDuration = (ms) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = ((ms % 60000) / 1000).toFixed(0);
-    return `${minutes}:${seconds.padStart(2, '0')}`;
-};
-
 const addSelectedSongsToPlaylist = async () => {
     if (selectedSongs.value.length === 0) return;
 
@@ -138,8 +132,16 @@ const generateSongKey = (song) => {
 };
 
 const formatArtists = (artists) => {
-    return artists?.join(', ') ?? 'Unknown Artist';
+    return artists && artists.length > 0 ? artists.join(', ') : 'Unknown Artist';
 };
+
+const formatDuration = (ms) => {
+    if (!ms) return '0:00';
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds.padStart(2, '0')}`;
+};
+
 const isSongSelected = (song) => {
     return selectedSongs.value.some(s => generateSongKey(s) === generateSongKey(song));
 };
@@ -223,13 +225,17 @@ const isSongSelected = (song) => {
                 <div class="max-h-80 overflow-y-auto">
                     <div v-for="song in searchResults" :key="generateSongKey(song)"
                         class="flex items-center justify-between py-2 hover:bg-[#3E3E3E] px-4 rounded">
+                        <!-- <div class="text-white">{{ song }}</div> -->
                         <div class="flex items-center">
-                            <img :src="song.image_url" alt="Album cover" class="w-12 h-12 mr-4">
+                            <img :src="song.image_url || '/path/to/default-album-cover.jpg'"
+                                :alt="`${song.song_name || 'Unknown Song'} cover`"
+                                class="w-12 h-12 mr-4 object-cover rounded">
                             <div>
                                 <div class="text-white font-semibold">{{ song.song_name || 'Unknown Song' }}</div>
                                 <div class="text-gray-400 text-sm">{{ formatArtists(song.artist_names) }}</div>
-                                <div class="text-gray-500 text-xs">{{ song.album_name || 'Unknown Album' }} • {{
-                                    formatDuration(song.duration) }}</div>
+                                <div class="text-gray-500 text-xs">
+                                    {{ song.album_name || 'Unknown Album' }} • {{ formatDuration(song.duration) }}
+                                </div>
                             </div>
                         </div>
                         <button @click="toggleSongSelection(song)"
