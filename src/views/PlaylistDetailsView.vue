@@ -84,6 +84,15 @@ const closeSearchModal = () => {
     showSearchModal.value = false;
 };
 
+const toggleSongSelection = (song) => {
+    const index = selectedSongs.value.findIndex(s => s.song_name === song.song_name && s.artist_names.join(',') === song.artist_names.join(','));
+    if (index > -1) {
+        selectedSongs.value.splice(index, 1);
+    } else {
+        selectedSongs.value.push(song);
+    }
+};
+
 const performSearch = async () => {
     if (searchTrack.value.trim() === '' && searchArtist.value.trim() === '') return;
 
@@ -93,17 +102,14 @@ const performSearch = async () => {
         console.error('Search error:', error.value);
         // Handle error (e.g., show a notification to the user)
     } else {
-        searchResults.value = results.value || [];
+        searchResults.value = results || [];
     }
 };
 
-const toggleSongSelection = (song) => {
-    const index = selectedSongs.value.findIndex(s => s.song_id === song.song_id);
-    if (index > -1) {
-        selectedSongs.value.splice(index, 1);
-    } else {
-        selectedSongs.value.push(song);
-    }
+const formatDuration = (ms) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds.padStart(2, '0')}`;
 };
 
 const addSelectedSongsToPlaylist = async () => {
@@ -120,6 +126,22 @@ const addSelectedSongsToPlaylist = async () => {
         await fetchPlaylistData();
         closeSearchModal();
     }
+};
+
+const generateSongKey = (song) => {
+    // Create a unique key using song name, artists, and album
+    // Use optional chaining and nullish coalescing to handle potential undefined values
+    const songName = song?.song_name ?? 'unknown';
+    const artists = song?.artist_names?.join(',') ?? 'unknown';
+    const albumName = song?.album_name ?? 'unknown';
+    return `${songName}-${artists}-${albumName}`;
+};
+
+const formatArtists = (artists) => {
+    return artists?.join(', ') ?? 'Unknown Artist';
+};
+const isSongSelected = (song) => {
+    return selectedSongs.value.some(s => generateSongKey(s) === generateSongKey(song));
 };
 </script>
 
@@ -183,7 +205,7 @@ const addSelectedSongsToPlaylist = async () => {
 
         <!-- Search and Add Songs Modal -->
         <div v-if="showSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-[#282828] p-8 rounded-lg w-full max-w-2xl">
+            <div class="bg-[#282828] p-8 rounded-lg w-full max-w-3xl">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-white">Add Songs to Playlist</h2>
                     <button @click="closeSearchModal" class="text-gray-400 hover:text-white">
@@ -199,16 +221,21 @@ const addSelectedSongsToPlaylist = async () => {
                         class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold">Search</button>
                 </div>
                 <div class="max-h-80 overflow-y-auto">
-                    <div v-for="song in searchResults" :key="song.song_id"
+                    <div v-for="song in searchResults" :key="generateSongKey(song)"
                         class="flex items-center justify-between py-2 hover:bg-[#3E3E3E] px-4 rounded">
-                        <div>
-                            <div class="text-white">{{ song.title }}</div>
-                            <div class="text-gray-400 text-sm">{{ song.artist }}</div>
+                        <div class="flex items-center">
+                            <img :src="song.image_url" alt="Album cover" class="w-12 h-12 mr-4">
+                            <div>
+                                <div class="text-white font-semibold">{{ song.song_name || 'Unknown Song' }}</div>
+                                <div class="text-gray-400 text-sm">{{ formatArtists(song.artist_names) }}</div>
+                                <div class="text-gray-500 text-xs">{{ song.album_name || 'Unknown Album' }} • {{
+                                    formatDuration(song.duration) }}</div>
+                            </div>
                         </div>
                         <button @click="toggleSongSelection(song)"
-                            :class="selectedSongs.some(s => s.song_id === song.song_id) ? 'bg-[#1BD760] text-black' : 'bg-[#3E3E3E] text-white'"
+                            :class="isSongSelected(song) ? 'bg-[#1BD760] text-black' : 'bg-[#3E3E3E] text-white'"
                             class="px-4 py-1 rounded-full text-sm font-bold">
-                            {{ selectedSongs.some(s => s.song_id === song.song_id) ? 'Selected' : 'Select' }}
+                            {{ isSongSelected(song) ? 'Selected' : 'Select' }}
                         </button>
                     </div>
                 </div>
@@ -216,7 +243,7 @@ const addSelectedSongsToPlaylist = async () => {
                     <button @click="addSelectedSongsToPlaylist"
                         class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold"
                         :disabled="selectedSongs.length === 0">
-                        Add Selected Songs
+                        Add Selected Songs ({{ selectedSongs.length }})
                     </button>
                 </div>
             </div>
