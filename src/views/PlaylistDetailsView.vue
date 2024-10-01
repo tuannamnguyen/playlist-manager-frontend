@@ -9,6 +9,8 @@ import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 import Heart from 'vue-material-design-icons/Heart.vue';
 import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
+import Plus from 'vue-material-design-icons/Plus.vue';
+import Close from 'vue-material-design-icons/Close.vue';
 import { useRoute } from 'vue-router';
 import artist from '../artist.json';
 import SongRow from '../components/SongRow.vue';
@@ -62,6 +64,63 @@ const ownership = computed(() => {
         user.value.sub == playlist.value.user_id
     );
 });
+
+// New code for search and add functionality
+const showSearchModal = ref(false);
+const searchTrack = ref('');
+const searchArtist = ref('');
+const searchResults = ref([]);
+const selectedSongs = ref([]);
+
+const openSearchModal = () => {
+    showSearchModal.value = true;
+    searchTrack.value = '';
+    searchArtist.value = '';
+    searchResults.value = [];
+    selectedSongs.value = [];
+};
+
+const closeSearchModal = () => {
+    showSearchModal.value = false;
+};
+
+const performSearch = async () => {
+    if (searchTrack.value.trim() === '' && searchArtist.value.trim() === '') return;
+
+    const { error, isPending, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
+
+    if (error.value) {
+        console.error('Search error:', error.value);
+        // Handle error (e.g., show a notification to the user)
+    } else {
+        searchResults.value = results.value || [];
+    }
+};
+
+const toggleSongSelection = (song) => {
+    const index = selectedSongs.value.findIndex(s => s.song_id === song.song_id);
+    if (index > -1) {
+        selectedSongs.value.splice(index, 1);
+    } else {
+        selectedSongs.value.push(song);
+    }
+};
+
+const addSelectedSongsToPlaylist = async () => {
+    if (selectedSongs.value.length === 0) return;
+
+    const { error, isPending, updatedPlaylist } = await addSongsToPlaylist(playlistId, selectedSongs.value);
+
+    if (error.value) {
+        console.error('Error adding songs:', error.value);
+        // Handle error (e.g., show a notification to the user)
+    } else {
+        console.log('Songs added successfully:', updatedPlaylist.value);
+        // Refresh the playlist data
+        await fetchPlaylistData();
+        closeSearchModal();
+    }
+};
 </script>
 
 <template>
@@ -96,12 +155,17 @@ const ownership = computed(() => {
                     <button type="button">
                         <DotsHorizontal fillColor="#FFFFFF" :size="25" />
                     </button>
+                    <button type="button" @click="openSearchModal"
+                        class="flex items-center bg-[#1BD760] text-black px-4 py-2 rounded-full text-sm font-bold">
+                        <Plus :size="20" class="mr-2" />
+                        Add song to playlist
+                    </button>
                 </div>
             </div>
         </div>
 
         <div class="mt-6"></div>
-        <!-- Updated header for song list -->
+        <!-- Existing song list header and content -->
         <div class="flex items-center justify-between px-4 pt-2 text-gray-400 text-sm">
             <div class="w-[30px] text-right mr-4">#</div>
             <div class="flex-grow">Title</div>
@@ -116,6 +180,47 @@ const ownership = computed(() => {
         <ul class="w-full">
             <SongRow v-for="(song, index) in songs" :key="song.song_id" :song="song" :index="index + 1" />
         </ul>
+
+        <!-- Search and Add Songs Modal -->
+        <div v-if="showSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-[#282828] p-8 rounded-lg w-full max-w-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Add Songs to Playlist</h2>
+                    <button @click="closeSearchModal" class="text-gray-400 hover:text-white">
+                        <Close :size="24" />
+                    </button>
+                </div>
+                <div class="mb-4 flex gap-4">
+                    <input v-model="searchTrack" @keyup.enter="performSearch" placeholder="Song name"
+                        class="bg-[#3E3E3E] text-white px-4 py-2 rounded-full flex-grow">
+                    <input v-model="searchArtist" @keyup.enter="performSearch" placeholder="Artist name"
+                        class="bg-[#3E3E3E] text-white px-4 py-2 rounded-full flex-grow">
+                    <button @click="performSearch"
+                        class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold">Search</button>
+                </div>
+                <div class="max-h-80 overflow-y-auto">
+                    <div v-for="song in searchResults" :key="song.song_id"
+                        class="flex items-center justify-between py-2 hover:bg-[#3E3E3E] px-4 rounded">
+                        <div>
+                            <div class="text-white">{{ song.title }}</div>
+                            <div class="text-gray-400 text-sm">{{ song.artist }}</div>
+                        </div>
+                        <button @click="toggleSongSelection(song)"
+                            :class="selectedSongs.some(s => s.song_id === song.song_id) ? 'bg-[#1BD760] text-black' : 'bg-[#3E3E3E] text-white'"
+                            class="px-4 py-1 rounded-full text-sm font-bold">
+                            {{ selectedSongs.some(s => s.song_id === song.song_id) ? 'Selected' : 'Select' }}
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button @click="addSelectedSongsToPlaylist"
+                        class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold"
+                        :disabled="selectedSongs.length === 0">
+                        Add Selected Songs
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
