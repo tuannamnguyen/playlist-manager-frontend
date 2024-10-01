@@ -11,12 +11,13 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Close from 'vue-material-design-icons/Close.vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import artist from '../artist.json';
 import SongRow from '../components/SongRow.vue';
 import { useSongStore } from '../stores/song';
 import addSongsToPlaylist from '@/composables/addSongsToPlaylist';
 import searchSongs from '@/composables/search';
+import deletePlaylist from '@/composables/deletePlaylist';
 
 const useSong = useSongStore()
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
@@ -145,6 +146,25 @@ const formatDuration = (ms) => {
 const isSongSelected = (song) => {
     return selectedSongs.value.some(s => generateSongKey(s) === generateSongKey(song));
 };
+
+const showDropdown = ref(false);
+
+const toggleDropdown = () => {
+    showDropdown.value = !showDropdown.value;
+};
+
+const handleDeletePlaylist = async () => {
+    if (confirm('Are you sure you want to delete this playlist?')) {
+        try {
+            await deletePlaylist(playlistId);
+            // Redirect to home page after successful deletion
+            router.push('/');
+        } catch (error) {
+            console.error('Error deleting playlist:', error);
+            // Handle error (e.g., show an error message to the user)
+        }
+    }
+};
 </script>
 
 <template>
@@ -168,6 +188,8 @@ const isSongSelected = (song) => {
                     </div>
                 </div>
 
+                <div class="text-gray-400 text-sm mt-2 mb-2">Created by {{ playlist.user_name }}</div>
+
                 <div class="absolute flex gap-4 items-center justify-start bottom-0 mb-1.5">
                     <button class="p-1 rounded-full bg-white" @click="playFunc()">
                         <Play v-if="!isPlaying" fillColor="#181818" :size="25" />
@@ -176,9 +198,19 @@ const isSongSelected = (song) => {
                     <button type="button">
                         <Heart fillColor="#1BD760" :size="30" />
                     </button>
-                    <button type="button">
-                        <DotsHorizontal fillColor="#FFFFFF" :size="25" />
-                    </button>
+                    <div class="relative">
+                        <button @click="toggleDropdown" type="button">
+                            <DotsHorizontal fillColor="#FFFFFF" :size="25" />
+                        </button>
+                        <div v-if="showDropdown && ownership"
+                            class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
+                            <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                <a href="#"
+                                    class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                    role="menuitem" @click="handleDeletePlaylist">Delete Playlist</a>
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" @click="openSearchModal"
                         class="flex items-center bg-[#1BD760] text-black px-4 py-2 rounded-full text-sm font-bold">
                         <Plus :size="20" class="mr-2" />
@@ -223,7 +255,8 @@ const isSongSelected = (song) => {
                         class="bg-[#1BD760] text-black px-6 py-2 rounded-full font-bold">Search</button>
                 </div>
                 <div class="bg-[#3E3E3E] text-white p-4 rounded-md mb-4 text-sm">
-                    <strong>Tip:</strong> For better conversion results, choose songs with an ISRC when available to help make conversion process more precise.
+                    <strong>Tip:</strong> For better conversion results, choose songs with an ISRC when available to
+                    help make conversion process more precise.
                 </div>
                 <div class="max-h-80 overflow-y-auto">
                     <div v-for="song in searchResults.value" :key="generateSongKey(song)"
