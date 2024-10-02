@@ -168,17 +168,30 @@ const handleDeletePlaylist = async () => {
     }
 };
 
+const showPlaylistDropdown = ref(false);
+const showSongDropdown = ref({});
+
+const togglePlaylistDropdown = () => {
+    showPlaylistDropdown.value = !showPlaylistDropdown.value;
+};
+
+const toggleSongDropdown = (songId) => {
+    showSongDropdown.value = {
+        ...showSongDropdown.value,
+        [songId]: !showSongDropdown.value[songId]
+    };
+};
+
 const deleteSongFromPlaylist = async (songId) => {
-    if (confirm('Are you sure you want to delete this song from the playlist?')) {
+    if (confirm('Are you sure you want to remove this song from the playlist?')) {
         try {
             const { error, updatedPlaylist } = await deleteSongsFromPlaylist(playlistId, [songId]);
             if (error.value) {
                 throw new Error(error.value);
             }
-            // Refresh the playlist data after deletion
             await fetchPlaylistData();
         } catch (error) {
-            console.error('Error deleting song from playlist:', error);
+            console.error('Error removing song from playlist:', error);
             // Handle error (e.g., show an error message to the user)
         }
     }
@@ -217,10 +230,10 @@ const deleteSongFromPlaylist = async (songId) => {
                         <Heart fillColor="#1BD760" :size="30" />
                     </button>
                     <div class="relative">
-                        <button @click="toggleDropdown" type="button">
+                        <button @click="togglePlaylistDropdown" type="button">
                             <DotsHorizontal fillColor="#FFFFFF" :size="25" />
                         </button>
-                        <div v-if="showDropdown && ownership"
+                        <div v-if="showPlaylistDropdown && ownership"
                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
                             <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                                 <a href="#"
@@ -277,10 +290,10 @@ const deleteSongFromPlaylist = async (songId) => {
                     <div class="text-sm text-gray-400 w-[100px] flex items-center justify-end">
                         <span class="mr-2">{{ formatDuration(song.duration) }}</span>
                         <div class="relative">
-                            <button @click="toggleDropdown" type="button" class="focus:outline-none">
+                            <button @click="toggleSongDropdown(song.song_id)" type="button" class="focus:outline-none">
                                 <DotsHorizontal fillColor="#FFFFFF" :size="20" />
                             </button>
-                            <div v-if="showDropdown"
+                            <div v-if="showSongDropdown[song.song_id]"
                                 class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
                                 <div class="py-1" role="menu" aria-orientation="vertical"
                                     aria-labelledby="options-menu">
