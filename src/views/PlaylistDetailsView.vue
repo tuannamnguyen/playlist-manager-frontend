@@ -1,23 +1,23 @@
 <script setup>
-import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
+import addSongsToPlaylist from '@/composables/addSongsToPlaylist';
+import deletePlaylist from '@/composables/deletePlaylist';
 import getPlaylist from '@/composables/getPlaylist';
+import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
+import searchSongs from '@/composables/search';
 import { useAuth0 } from '@auth0/auth0-vue';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutline.vue';
+import Close from 'vue-material-design-icons/Close.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 import Heart from 'vue-material-design-icons/Heart.vue';
 import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
-import Close from 'vue-material-design-icons/Close.vue';
 import { useRoute, useRouter } from 'vue-router';
-import artist from '../artist.json';
 import SongRow from '../components/SongRow.vue';
 import { useSongStore } from '../stores/song';
-import addSongsToPlaylist from '@/composables/addSongsToPlaylist';
-import searchSongs from '@/composables/search';
-import deletePlaylist from '@/composables/deletePlaylist';
+import deleteSongsFromPlaylist from '@/composables/deleteSongsFromPlaylist';
 
 const useSong = useSongStore()
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
@@ -167,6 +167,22 @@ const handleDeletePlaylist = async () => {
         }
     }
 };
+
+const deleteSongFromPlaylist = async (songId) => {
+    if (confirm('Are you sure you want to delete this song from the playlist?')) {
+        try {
+            const { error, updatedPlaylist } = await deleteSongsFromPlaylist(playlistId, [songId]);
+            if (error.value) {
+                throw new Error(error.value);
+            }
+            // Refresh the playlist data after deletion
+            await fetchPlaylistData();
+        } catch (error) {
+            console.error('Error deleting song from playlist:', error);
+            // Handle error (e.g., show an error message to the user)
+        }
+    }
+};
 </script>
 
 <template>
@@ -224,20 +240,62 @@ const handleDeletePlaylist = async () => {
 
         <div class="mt-6"></div>
         <!-- Existing song list header and content -->
+        <div class="mt-6"></div>
         <div class="flex items-center justify-between px-4 pt-2 text-gray-400 text-sm">
             <div class="w-[30px] text-right mr-4">#</div>
             <div class="flex-grow">Title</div>
             <div class="w-1/4">Album</div>
             <div class="w-1/5">Date added</div>
-            <div class="w-[50px] text-right">
+            <div class="w-[100px] text-right flex items-center justify-end">
                 <ClockTimeThreeOutline fillColor="#FFFFFF" :size="18" />
             </div>
         </div>
         <div class="border-b border-b-[#2A2A2A] mt-2"></div>
         <div class="mb-4"></div>
         <ul class="w-full">
-            <SongRow v-for="(song, index) in songs" :key="song.song_id" :song="song" :index="index + 1" />
+            <li v-for="(song, index) in songs" :key="song.song_id"
+                class="flex items-center justify-between rounded-md hover:bg-[#2A2929] px-4 py-2">
+                <div class="flex items-center w-full">
+                    <div class="text-gray-400 font-semibold w-[30px] text-right mr-4">
+                        {{ index + 1 }}
+                    </div>
+                    <img :src="song.image_url" alt="Album Cover" class="w-10 h-10 mr-4 rounded">
+                    <div class="flex-grow">
+                        <div class="text-white font-semibold">
+                            {{ song.song_name }}
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            {{ song.artist_names.join(', ') }}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 w-1/4">
+                        {{ song.album_name }}
+                    </div>
+                    <div class="text-sm text-gray-400 w-1/5">
+                        {{ song.added_at ? new Date(song.added_at).toLocaleDateString() : 'N/A' }}
+                    </div>
+                    <div class="text-sm text-gray-400 w-[100px] flex items-center justify-end">
+                        <span class="mr-2">{{ formatDuration(song.duration) }}</span>
+                        <div class="relative">
+                            <button @click="toggleDropdown" type="button" class="focus:outline-none">
+                                <DotsHorizontal fillColor="#FFFFFF" :size="20" />
+                            </button>
+                            <div v-if="showDropdown"
+                                class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
+                                <div class="py-1" role="menu" aria-orientation="vertical"
+                                    aria-labelledby="options-menu">
+                                    <a href="#"
+                                        class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                        role="menuitem" @click="deleteSongFromPlaylist(song.song_id)">Remove from
+                                        playlist</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </li>
         </ul>
+
 
         <!-- Search and Add Songs Modal -->
         <div v-if="showSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
