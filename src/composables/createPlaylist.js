@@ -1,10 +1,9 @@
-import { ref } from "vue";
+import { ref } from 'vue';
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
-const createPlaylist = async (playlistName, userId, userName) => {
+const createPlaylist = async (playlistData) => {
     const error = ref(null);
-    const isPending = ref(true);
     const newPlaylist = ref(null);
 
     try {
@@ -13,25 +12,17 @@ const createPlaylist = async (playlistName, userId, userName) => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                playlist_name: playlistName,
-                user_id: userId,
-                user_name: userName
-            }),
+            body: JSON.stringify(playlistData),
         });
-        if (!response.ok) {
-            throw new Error('Failed to create playlist');
-        }
+
+        if (!response.ok) throw new Error('Failed to create playlist');
+
         newPlaylist.value = await response.json();
-        console.log('Created playlist:', newPlaylist.value);
     } catch (err) {
-        console.error('Error creating playlist:', err);
-        error.value = 'Could not create playlist';
-    } finally {
-        isPending.value = false;
+        error.value = err.message;
     }
 
-    return { error, isPending, newPlaylist };
+    return { error, newPlaylist };
 };
 
 export default createPlaylist;

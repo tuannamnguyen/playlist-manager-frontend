@@ -1,10 +1,9 @@
-import { ref } from "vue";
+import { ref } from 'vue';
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
 const uploadPlaylistImage = async (playlistId, imageFile) => {
     const error = ref(null);
-    const isPending = ref(true);
     const imageUrl = ref(null);
 
     try {
@@ -16,21 +15,15 @@ const uploadPlaylistImage = async (playlistId, imageFile) => {
             body: formData,
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to upload playlist image');
-        }
+        if (!response.ok) throw new Error('Failed to upload image');
 
-        const result = await response.json();
-        imageUrl.value = result.image_url;
-        console.log('Uploaded playlist image:', imageUrl.value);
+        const data = await response.json();
+        imageUrl.value = data.image_url;
     } catch (err) {
-        console.error('Error uploading playlist image:', err);
-        error.value = 'Could not upload playlist image';
-    } finally {
-        isPending.value = false;
+        error.value = err.message;
     }
 
-    return { error, isPending, imageUrl };
+    return { error, imageUrl };
 };
 
 export default uploadPlaylistImage;
