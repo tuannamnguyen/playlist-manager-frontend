@@ -12,9 +12,12 @@ import getAllPlaylists from './composables/getAllPlaylists';
 
 import { useSongStore } from './stores/song'
 import { storeToRefs } from 'pinia';
+
 const useSong = useSongStore()
 const { isPlaying, currentTrack } = storeToRefs(useSong)
 const { logout, user } = useAuth0();
+
+const apiServerUrl = import.meta.env.VITE_API_SERVER_URL; // Make sure this is defined in your .env file
 
 const handleLogout = () =>
     logout({
@@ -24,6 +27,7 @@ const handleLogout = () =>
     });
 
 onMounted(() => {
+    checkSpotifyAuthStatus();
     isPlaying.value = false;
 })
 
@@ -43,6 +47,29 @@ const fetchPlaylists = async () => {
         console.log('User data not available yet');
     }
 };
+
+
+const isSpotifyLoggedIn = ref(false);
+
+const checkSpotifyAuthStatus = async () => {
+    try {
+        const authCheckResponse = await fetch(`${apiServerUrl}/api/oauth/check_auth/spotify`, {
+            method: 'GET',
+            credentials: 'include', // Include cookies for session validation
+        });
+        isSpotifyLoggedIn.value = authCheckResponse.status === 200;
+    } catch (error) {
+        console.error('Failed to check Spotify auth status:', error);
+        isSpotifyLoggedIn.value = false;
+    }
+};
+
+const handleSpotifyLogin = async () => {
+    if (!isSpotifyLoggedIn.value) {
+        window.location.href = `${apiServerUrl}/api/oauth/spotify`;
+    }
+};
+
 
 // Watch for changes in the user object
 watch(() => user.value, (newUser) => {
@@ -76,15 +103,23 @@ watch(() => user.value, (newUser) => {
                 </button>
             </div>
 
-            <button @click="openMenu = !openMenu" :class="openMenu ? 'bg-[#282828]' : 'bg-black'"
-                class="bg-black hover:bg-[#282828] rounded-full p-0.5 mr-8 mt-0.5 cursor-pointer">
-                <div class="flex items-center">
-                    <img class="rounded-full" width="27" :src="user.picture" alt="User profile">
-                    <div class="text-white text-[14px] ml-1.5 font-semibold">{{ user.name }}</div>
-                    <ChevronDown v-if="!openMenu" @click="openMenu = true" fillColor="#FFFFFF" :size="25" />
-                    <ChevronUp v-else @click="openMenu = false" fillColor="#FFFFFF" :size="25" />
-                </div>
-            </button>
+            <div class="flex items-center">
+                <button @click="handleSpotifyLogin"
+                    :class="isSpotifyLoggedIn ? 'bg-[#1DB954] text-white' : 'bg-white text-black'"
+                    class="px-4 py-2 rounded-full mr-4 hover:opacity-90">
+                    {{ isSpotifyLoggedIn ? 'Logged in to Spotify' : 'Login to Spotify' }}
+                </button>
+
+                <button @click="openMenu = !openMenu" :class="openMenu ? 'bg-[#282828]' : 'bg-black'"
+                    class="bg-black hover:bg-[#282828] rounded-full p-0.5 mr-8 mt-0.5 cursor-pointer">
+                    <div class="flex items-center">
+                        <img class="rounded-full" width="27" :src="user.picture" alt="User profile">
+                        <div class="text-white text-[14px] ml-1.5 font-semibold">{{ user.name }}</div>
+                        <ChevronDown v-if="!openMenu" @click="openMenu = true" fillColor="#FFFFFF" :size="25" />
+                        <ChevronUp v-else @click="openMenu = false" fillColor="#FFFFFF" :size="25" />
+                    </div>
+                </button>
+            </div>
 
             <span v-if="openMenu"
                 class="fixed w-[190px] bg-[#282828] shadow-2xl z-50 rounded-sm top-[52px] right-[35px] p-1 cursor-pointer">
