@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, unref } from 'vue';
 import { useAuth0 } from "@auth0/auth0-vue";
 import { useRouter } from 'vue-router';
 import uploadPlaylistImage from '@/composables/uploadPlaylistImage';
@@ -37,26 +37,42 @@ const handleSubmit = async () => {
         };
 
         const { error: createError, newPlaylist } = await createPlaylist(playlistData);
-        if (createError) throw new Error(createError);
+
+        // Safely unwrap createError if it's a ref
+        const unrefedCreateError = unref(createError);
+
+        if (unrefedCreateError) {
+            throw new Error(typeof unrefedCreateError === 'string' ? unrefedCreateError : JSON.stringify(unrefedCreateError));
+        }
+
+        // Safely unwrap newPlaylist
+        const unrefedPlaylist = unref(newPlaylist);
+
+        // Check if the unrefed value is null or undefined
+        if (!unrefedPlaylist) {
+            throw new Error("Failed to create playlist: No playlist data returned");
+        }
 
         // If playlist creation was successful and an image was selected, upload it
-        if (newPlaylist.value && newPlaylist.value.playlist_id && selectedImage.value) {
-            const { error: uploadError } = await uploadPlaylistImage(newPlaylist.value.playlist_id, selectedImage.value);
-            if (uploadError) {
-                console.error("Image upload failed:", uploadError);
-                // Optionally, you can choose to throw an error here if you want to treat image upload failure as a critical error
-                // throw new Error(uploadError);
+        if (unrefedPlaylist.playlist_id && selectedImage.value) {
+            const { error: uploadError } = await uploadPlaylistImage(unrefedPlaylist.playlist_id, selectedImage.value);
+            const unrefedUploadError = unref(uploadError);
+
+            if (unrefedUploadError) {
+                console.error("Image upload failed:", unrefedUploadError);
             }
         }
 
         // Redirect to the new playlist page or home page
         router.push('/');
     } catch (err) {
-        error.value = err.message || "An error occurred while creating the playlist";
+        console.error('Error in handleSubmit:', err);
+        error.value = err.message || "An unexpected error occurred while creating the playlist";
     } finally {
         isLoading.value = false;
     }
 };
+
 </script>
 
 <template>

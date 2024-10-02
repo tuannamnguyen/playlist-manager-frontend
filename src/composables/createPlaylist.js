@@ -15,11 +15,17 @@ const createPlaylist = async (playlistData) => {
             body: JSON.stringify(playlistData),
         });
 
-        if (!response.ok) throw new Error('Failed to create playlist');
+        const data = await response.json();
 
-        newPlaylist.value = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+
+        newPlaylist.value = data;
+        console.log(newPlaylist.value)
     } catch (err) {
-        error.value = err.message;
+        console.error('Error in createPlaylist:', err);
+        error.value = err.message || 'An unexpected error occurred';
     }
 
     return { error, newPlaylist };
