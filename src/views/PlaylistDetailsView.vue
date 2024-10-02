@@ -31,6 +31,8 @@ const playFunc = () => {
 }
 
 const route = useRoute();
+const router = useRouter();
+
 const playlistId = route.params.id;
 
 const error = ref(null);
@@ -172,7 +174,7 @@ const handleDeletePlaylist = async () => {
         <!-- Existing playlist header content -->
         <div class="py-1.5"></div>
         <div class="flex items-center w-full relative h-full">
-            <img width="140" :src="artist.albumCover">
+            <img width="140" :src="playlist.image_url">
 
             <div class="w-full ml-5">
                 <div style="font-size: 33px;"
