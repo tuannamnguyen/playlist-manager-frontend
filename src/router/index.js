@@ -3,6 +3,7 @@ import PlaylistDetailsView from '@/views/PlaylistDetailsView.vue';
 import { authGuard } from "@auth0/auth0-vue";
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
+import CreatePlaylistView from '@/views/CreatePlaylistView.vue';
 
 
 const router = createRouter({
@@ -24,7 +25,7 @@ const router = createRouter({
     {
       path: "/playlists/create",
       name: "CreatePlaylist",
-      component: PlaylistDetailsView,
+      component: CreatePlaylistView,
       beforeEnter: authGuard,
     },
     {
