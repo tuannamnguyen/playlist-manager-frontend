@@ -1,6 +1,7 @@
 <script setup>
 import addSongsToPlaylist from '@/composables/addSongsToPlaylist';
 import deletePlaylist from '@/composables/deletePlaylist';
+import deleteSongsFromPlaylist from '@/composables/deleteSongsFromPlaylist';
 import getPlaylist from '@/composables/getPlaylist';
 import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
 import searchSongs from '@/composables/search';
@@ -15,9 +16,7 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import { useRoute, useRouter } from 'vue-router';
-import SongRow from '../components/SongRow.vue';
 import { useSongStore } from '../stores/song';
-import deleteSongsFromPlaylist from '@/composables/deleteSongsFromPlaylist';
 
 const useSong = useSongStore()
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
@@ -88,7 +87,8 @@ const closeSearchModal = () => {
 };
 
 const toggleSongSelection = (song) => {
-    const index = selectedSongs.value.findIndex(s => s.song_name === song.song_name && s.artist_names.join(',') === song.artist_names.join(','));
+    const songKey = generateSongKey(song);
+    const index = selectedSongs.value.findIndex(s => generateSongKey(s) === songKey);
     if (index > -1) {
         selectedSongs.value.splice(index, 1);
     } else {
@@ -126,13 +126,14 @@ const addSelectedSongsToPlaylist = async () => {
 };
 
 const generateSongKey = (song) => {
-    // Create a unique key using song name, artists, and album
-    // Use optional chaining and nullish coalescing to handle potential undefined values
+    // Create a unique key using song name, artists, album, and ISRC
     const songName = song?.song_name ?? 'unknown';
     const artists = song?.artist_names?.join(',') ?? 'unknown';
     const albumName = song?.album_name ?? 'unknown';
-    return `${songName}-${artists}-${albumName}`;
+    const isrc = song?.isrc ?? 'unknown';
+    return `${songName}-${artists}-${albumName}-${isrc}`;
 };
+
 
 const formatArtists = (artists) => {
     return artists && artists.length > 0 ? artists.join(', ') : 'Unknown Artist';
@@ -196,6 +197,33 @@ const deleteSongFromPlaylist = async (songId) => {
         }
     }
 };
+
+const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
+
+const convertToSpotify = async () => {
+    try {
+        const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Note: The cookie will be automatically included if you're using credentials: 'include'
+            },
+            credentials: 'include', // This is important for including the session cookie
+            body: JSON.stringify({ playlist_name: playlist.value.playlist_name })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to convert playlist');
+        }
+
+        const result = await response.json();
+        console.log('Playlist converted successfully:', result);
+        // You might want to show a success message to the user here
+    } catch (error) {
+        console.error('Error converting playlist:', error);
+        // Handle error (e.g., show an error message to the user)
+    }
+};
 </script>
 
 <template>
@@ -247,13 +275,16 @@ const deleteSongFromPlaylist = async (songId) => {
                         <Plus :size="20" class="mr-2" />
                         Add song to playlist
                     </button>
+                    <button type="button" @click="convertToSpotify"
+                        class="flex items-center bg-[#1DB954] text-white px-4 py-2 rounded-full text-sm font-bold">
+                        Convert to Spotify
+                    </button>
                 </div>
             </div>
         </div>
 
         <div class="mt-6"></div>
-        <!-- Existing song list header and content -->
-        <div class="mt-6"></div>
+        <!-- Updated song list header -->
         <div class="flex items-center justify-between px-4 pt-2 text-gray-400 text-sm">
             <div class="w-[30px] text-right mr-4">#</div>
             <div class="flex-grow">Title</div>
@@ -285,7 +316,7 @@ const deleteSongFromPlaylist = async (songId) => {
                         {{ song.album_name }}
                     </div>
                     <div class="text-sm text-gray-400 w-1/5">
-                        {{ song.added_at ? new Date(song.added_at).toLocaleDateString() : 'N/A' }}
+                        {{ song.created_at ? new Date(song.created_at).toLocaleDateString() : 'N/A' }}
                     </div>
                     <div class="text-sm text-gray-400 w-[100px] flex items-center justify-end">
                         <span class="mr-2">{{ formatDuration(song.duration) }}</span>
