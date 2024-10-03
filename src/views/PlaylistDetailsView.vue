@@ -18,6 +18,9 @@ import Plus from 'vue-material-design-icons/Plus.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSongStore } from '../stores/song';
 
+const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
+
+
 const useSong = useSongStore()
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
 
@@ -57,7 +60,10 @@ const fetchPlaylistData = async () => {
     }
 };
 
-onMounted(fetchPlaylistData);
+onMounted(async () => {
+    await fetchPlaylistData();
+    await checkSpotifyAuthStatus();
+});
 
 const ownership = computed(() => {
     return (
@@ -198,17 +204,35 @@ const deleteSongFromPlaylist = async (songId) => {
     }
 };
 
-const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
+
+const isSpotifyLoggedIn = ref(false);
+
+const checkSpotifyAuthStatus = async () => {
+    try {
+        const response = await fetch(`${apiServerUrl}/api/oauth/check_auth/spotify`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+        isSpotifyLoggedIn.value = response.ok;
+    } catch (error) {
+        console.error('Error checking Spotify auth status:', error);
+        isSpotifyLoggedIn.value = false;
+    }
+};
+
 
 const convertToSpotify = async () => {
+    if (!isSpotifyLoggedIn.value) {
+        // Redirect to Spotify login or show a message
+        console.log('Please log in to Spotify first');
+        return;
+    }
+
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Note: The cookie will be automatically included if you're using credentials: 'include'
-            },
-            credentials: 'include', // This is important for including the session cookie
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ playlist_name: playlist.value.playlist_name })
         });
 
@@ -218,12 +242,13 @@ const convertToSpotify = async () => {
 
         const result = await response.json();
         console.log('Playlist converted successfully:', result);
-        // You might want to show a success message to the user here
+        // Show success message to the user
     } catch (error) {
         console.error('Error converting playlist:', error);
-        // Handle error (e.g., show an error message to the user)
+        // Show error message to the user
     }
 };
+
 </script>
 
 <template>
@@ -275,9 +300,11 @@ const convertToSpotify = async () => {
                         <Plus :size="20" class="mr-2" />
                         Add song to playlist
                     </button>
-                    <button type="button" @click="convertToSpotify"
-                        class="flex items-center bg-[#1DB954] text-white px-4 py-2 rounded-full text-sm font-bold">
-                        Convert to Spotify
+                    <button type="button" @click="convertToSpotify" :class="[
+                        'flex items-center px-4 py-2 rounded-full text-sm font-bold',
+                        isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                    ]" :disabled="!isSpotifyLoggedIn">
+                        {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
                     </button>
                 </div>
             </div>
