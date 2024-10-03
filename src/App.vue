@@ -70,6 +70,24 @@ const handleSpotifyLogin = async () => {
     }
 };
 
+const handleSpotifyLogout = async () => {
+    try {
+        const response = await fetch(`${apiServerUrl}/api/oauth/logout/spotify`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        if (response.ok) {
+            isSpotifyLoggedIn.value = false;
+            showSpotifyDropdown.value = false;
+            // You might want to show a success message here
+        } else {
+            throw new Error('Logout failed');
+        }
+    } catch (error) {
+        console.error('Error logging out from Spotify:', error);
+        // You might want to show an error message here
+    }
+};
 
 // Watch for changes in the user object
 watch(() => user.value, (newUser) => {
@@ -104,11 +122,21 @@ watch(() => user.value, (newUser) => {
             </div>
 
             <div class="flex items-center">
-                <button @click="handleSpotifyLogin"
-                    :class="isSpotifyLoggedIn ? 'bg-[#1DB954] text-white' : 'bg-white text-black'"
-                    class="px-4 py-2 rounded-full mr-4 hover:opacity-90">
-                    {{ isSpotifyLoggedIn ? 'Logged in to Spotify' : 'Login to Spotify' }}
-                </button>
+                <div class="relative">
+                    <button @click="handleSpotifyLogin"
+                        :class="isSpotifyLoggedIn ? 'bg-[#1DB954] text-white' : 'bg-white text-black'"
+                        class="px-4 py-2 rounded-full mr-4 hover:opacity-90">
+                        {{ isSpotifyLoggedIn ? 'Logged in to Spotify' : 'Login to Spotify' }}
+                    </button>
+                    <div v-if="isSpotifyLoggedIn && showSpotifyDropdown"
+                        class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                            <a href="#"
+                                class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                role="menuitem" @click="handleSpotifyLogout">Log out from Spotify</a>
+                        </div>
+                    </div>
+                </div>
 
                 <button @click="openMenu = !openMenu" :class="openMenu ? 'bg-[#282828]' : 'bg-black'"
                     class="bg-black hover:bg-[#282828] rounded-full p-0.5 mr-8 mt-0.5 cursor-pointer">
