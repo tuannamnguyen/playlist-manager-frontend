@@ -1,27 +1,34 @@
+import { ref } from "vue";
+
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
-
-async function fetchLyrics(song, artists) {
-    const url = `${apiServerUrl}/api/metadata/song_lyrics`;
-    const data = { song, artists };
+const fetchLyrics = async (song, artists) => {
+    const error = ref(null);
+    const lyrics = ref(null);
+    const isPending = ref(true);
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${apiServerUrl}/api/metadata/song_lyrics`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ song, artists }),
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Failed to fetch song lyrics');
         }
 
-        const result = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Error fetching lyrics:', error);
-        throw error;
+        lyrics.value = await response.json();
+    } catch (err) {
+        console.error(`Error fetching lyrics for "${song}" by ${artists}:`, err);
+        error.value = 'Could not fetch song lyrics';
+    } finally {
+        isPending.value = false;
     }
-}
+
+    return { error, isPending, lyrics };
+};
+
+export default fetchLyrics;

@@ -5,6 +5,7 @@ import deleteSongsFromPlaylist from '@/composables/deleteSongsFromPlaylist';
 import getPlaylist from '@/composables/getPlaylist';
 import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
 import searchSongs from '@/composables/search';
+import fetchLyrics from '@/composables/fetchLyrics';
 import { useAuth0 } from '@auth0/auth0-vue';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
@@ -249,6 +250,27 @@ const convertToSpotify = async () => {
     }
 };
 
+const showLyricsModal = ref(false);
+const currentLyrics = ref('');
+const currentSongForLyrics = ref(null);
+
+const viewLyrics = async (song) => {
+    currentSongForLyrics.value = song;
+    showLyricsModal.value = true;
+    const { error, isPending, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
+    if (error.value) {
+        currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
+    } else {
+        currentLyrics.value = lyrics.value.lyrics; // Note the change here to access the 'lyrics' property
+    }
+};
+
+const closeLyricsModal = () => {
+    showLyricsModal.value = false;
+    currentLyrics.value = '';
+    currentSongForLyrics.value = null;
+};
+
 </script>
 
 <template>
@@ -352,21 +374,39 @@ const convertToSpotify = async () => {
                                 <DotsHorizontal fillColor="#FFFFFF" :size="20" />
                             </button>
                             <div v-if="showSongDropdown[song.song_id]"
-                                class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
+                                class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5 z-10">
                                 <div class="py-1" role="menu" aria-orientation="vertical"
                                     aria-labelledby="options-menu">
                                     <a href="#"
                                         class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
-                                        role="menuitem" @click="deleteSongFromPlaylist(song.song_id)">Remove from
-                                        playlist</a>
+                                        role="menuitem" @click.prevent="deleteSongFromPlaylist(song.song_id)">Remove
+                                        from playlist</a>
+                                    <a href="#"
+                                        class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                        role="menuitem" @click.prevent="viewLyrics(song)">View Lyrics</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </li>
         </ul>
 
+        <!-- Lyrics Modal -->
+        <div v-if="showLyricsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-[#282828] p-8 rounded-lg w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">
+                        {{ currentSongForLyrics?.song_name }} - {{ currentSongForLyrics?.artist_names.join(', ') }}
+                    </h2>
+                    <button @click="closeLyricsModal" class="text-gray-400 hover:text-white">
+                        <Close :size="24" />
+                    </button>
+                </div>
+                <div class="text-white whitespace-pre-wrap">{{ currentLyrics }}</div>
+            </div>
+        </div>
 
         <!-- Search and Add Songs Modal -->
         <div v-if="showSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
