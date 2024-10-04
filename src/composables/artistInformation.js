@@ -13,17 +13,20 @@ export function useArtistInfo() {
         try {
             const response = await fetch(`${apiServerUrl}/api/metadata/artist_information?artist_name=${encodeURIComponent(artistName)}`, {
                 method: 'GET',
-                redirect: 'follow' // This allows automatic redirection
+                headers: {
+                    'Accept': 'application/json',
+                },
             });
 
-            if (response.redirected) {
-                // If the API redirected, navigate to the new URL
-                window.location.href = response.url;
-            } else if (response.ok) {
-                // If the API doesn't redirect but returns data directly
+            if (response.ok) {
                 const data = await response.json();
-                console.log('Artist data:', data);
-                // Handle the data as needed
+                if (data.redirect_url) {
+                    // Open the redirect URL in a new tab
+                    window.open(data.redirect_url, '_blank');
+                } else {
+                    console.error('No redirect URL provided');
+                    error.value = 'Could not fetch artist information';
+                }
             } else {
                 throw new Error('Failed to fetch artist information');
             }

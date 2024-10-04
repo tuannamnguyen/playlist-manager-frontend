@@ -18,6 +18,7 @@ import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSongStore } from '../stores/song';
+import { useArtistInfo } from '@/composables/artistInformation';
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
@@ -74,7 +75,7 @@ const ownership = computed(() => {
     );
 });
 
-// New code for search and add functionality
+
 const showSearchModal = ref(false);
 const searchTrack = ref('');
 const searchArtist = ref('');
@@ -123,17 +124,14 @@ const addSelectedSongsToPlaylist = async () => {
 
     if (error.value) {
         console.error('Error adding songs:', error.value);
-        // Handle error (e.g., show a notification to the user)
     } else {
         console.log('Songs added successfully:', updatedPlaylist.value);
-        // Refresh the playlist data
         await fetchPlaylistData();
         closeSearchModal();
     }
 };
 
 const generateSongKey = (song) => {
-    // Create a unique key using song name, artists, album, and ISRC
     const songName = song?.song_name ?? 'unknown';
     const artists = song?.artist_names?.join(',') ?? 'unknown';
     const albumName = song?.album_name ?? 'unknown';
@@ -261,7 +259,7 @@ const viewLyrics = async (song) => {
     if (error.value) {
         currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
     } else {
-        currentLyrics.value = lyrics.value.lyrics; // Note the change here to access the 'lyrics' property
+        currentLyrics.value = lyrics.value.lyrics;
     }
 };
 
@@ -269,6 +267,12 @@ const closeLyricsModal = () => {
     showLyricsModal.value = false;
     currentLyrics.value = '';
     currentSongForLyrics.value = null;
+};
+
+const { fetchArtistInfo } = useArtistInfo();
+
+const handleArtistClick = (artistName) => {
+    fetchArtistInfo(artistName);
 };
 
 </script>
@@ -358,7 +362,13 @@ const closeLyricsModal = () => {
                             {{ song.song_name }}
                         </div>
                         <div class="text-sm text-gray-400">
-                            {{ song.artist_names.join(', ') }}
+                            <span v-for="(artist, artistIndex) in song.artist_names" :key="artistIndex">
+                                <span @click="handleArtistClick(artist)"
+                                    class="cursor-pointer hover:underline hover:text-white">
+                                    {{ artist }}
+                                </span>
+                                <span v-if="artistIndex < song.artist_names.length - 1">, </span>
+                            </span>
                         </div>
                     </div>
                     <div class="text-sm text-gray-400 w-1/4">
