@@ -8,6 +8,8 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import SkipBackward from 'vue-material-design-icons/SkipBackward.vue';
 import SkipForward from 'vue-material-design-icons/SkipForward.vue';
 
+
+
 import { useSpotifyStore } from '../stores/spotify'
 import { storeToRefs } from 'pinia';
 
@@ -26,11 +28,12 @@ let token = ref(null)
 
 const checkAuthAndGetToken = async () => {
     try {
-        // Check if user is authenticated
-        const authResponse = await fetch(`${apiServerUrl}/api/oauth/check_auth/spotify`);
+        const authResponse = await fetch(`${apiServerUrl}/api/oauth/check_auth/spotify`, {
+            credentials: 'include'
+        });
+
         if (authResponse.status === 401) {
             console.log('User not authenticated with Spotify');
-            // Here you might want to redirect the user to a login page or show a login prompt
             return false;
         }
 
@@ -38,8 +41,10 @@ const checkAuthAndGetToken = async () => {
             throw new Error('Failed to check authentication status');
         }
 
-        // If authenticated, get the token
-        const tokenResponse = await fetch(`${apiServerUrl}/api/oauth/token/spotify`);
+        const tokenResponse = await fetch(`${apiServerUrl}/api/oauth/token/spotify`, {
+            credentials: 'include'
+        });
+
         if (!tokenResponse.ok) {
             throw new Error('Failed to retrieve token');
         }
@@ -85,8 +90,6 @@ const initializeSpotifyPlayer = () => {
 
     spotifyPlayer.connect();
 }
-
-
 onMounted(async () => {
     const isAuthenticated = await checkAuthAndGetToken();
     if (!isAuthenticated) {
