@@ -13,6 +13,8 @@ import { storeToRefs } from 'pinia';
 
 const spotifyStore = useSpotifyStore()
 const { is_active, player, current_track } = storeToRefs(spotifyStore)
+const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
+
 
 let isHover = ref(false)
 let isTrackTimeCurrent = ref(null)
@@ -20,53 +22,85 @@ let isTrackTimeTotal = ref(null)
 let seeker = ref(null)
 let seekerContainer = ref(null)
 let range = ref(0)
+let token = ref(null)
 
-const props = defineProps({
-    token: {
-        type: String,
-        required: true,
-    },
-});
+const checkAuthAndGetToken = async () => {
+    try {
+        // Check if user is authenticated
+        const authResponse = await fetch(`${apiServerUrl}/api/oauth/check_auth/spotify`);
+        if (authResponse.status === 401) {
+            console.log('User not authenticated with Spotify');
+            // Here you might want to redirect the user to a login page or show a login prompt
+            return false;
+        }
 
-onMounted(() => {
+        if (authResponse.status !== 200) {
+            throw new Error('Failed to check authentication status');
+        }
+
+        // If authenticated, get the token
+        const tokenResponse = await fetch(`${apiServerUrl}/api/oauth/token/spotify`);
+        if (!tokenResponse.ok) {
+            throw new Error('Failed to retrieve token');
+        }
+
+        const tokenData = await tokenResponse.json();
+        token.value = tokenData.access_token;
+        return true;
+    } catch (error) {
+        console.error('Error during authentication check or token retrieval:', error);
+        return false;
+    }
+}
+
+const initializeSpotifyPlayer = () => {
+    const spotifyPlayer = new window.Spotify.Player({
+        name: 'Playlist Manager Web Playback SDK',
+        getOAuthToken: cb => { cb(token.value); },
+        volume: 0.5
+    });
+
+    spotifyStore.setPlayer(spotifyPlayer);
+
+    spotifyPlayer.addListener('ready', ({ device_id }) => {
+        console.log('Ready with Device ID', device_id);
+    });
+
+    spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+        console.log('Device ID has gone offline', device_id);
+    });
+
+    spotifyPlayer.addListener('player_state_changed', (state) => {
+        if (!state) {
+            return;
+        }
+
+        spotifyStore.setTrack(state.track_window.current_track);
+        spotifyStore.setPaused(state.paused);
+
+        spotifyPlayer.getCurrentState().then(state => {
+            (!state) ? spotifyStore.setActive(false) : spotifyStore.setActive(true)
+        });
+    });
+
+    spotifyPlayer.connect();
+}
+
+
+onMounted(async () => {
+    const isAuthenticated = await checkAuthAndGetToken();
+    if (!isAuthenticated) {
+        console.log('Authentication failed or user not logged in');
+        return;
+    }
+
     // Load Spotify SDK
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
     script.async = true;
     document.body.appendChild(script);
 
-    window.onSpotifyWebPlaybackSDKReady = () => {
-        const spotifyPlayer = new window.Spotify.Player({
-            name: 'Web Playback SDK',
-            getOAuthToken: cb => { cb(props.token); },
-            volume: 0.5
-        });
-
-        spotifyStore.setPlayer(spotifyPlayer);
-
-        spotifyPlayer.addListener('ready', ({ device_id }) => {
-            console.log('Ready with Device ID', device_id);
-        });
-
-        spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-            console.log('Device ID has gone offline', device_id);
-        });
-
-        spotifyPlayer.addListener('player_state_changed', (state) => {
-            if (!state) {
-                return;
-            }
-
-            spotifyStore.setTrack(state.track_window.current_track);
-            spotifyStore.setPaused(state.paused);
-
-            spotifyPlayer.getCurrentState().then(state => {
-                (!state) ? spotifyStore.setActive(false) : spotifyStore.setActive(true)
-            });
-        });
-
-        spotifyPlayer.connect();
-    };
+    window.onSpotifyWebPlaybackSDKReady = initializeSpotifyPlayer;
 
     if (seeker.value && seekerContainer.value) {
         seeker.value.addEventListener("change", function () {
