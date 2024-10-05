@@ -63,6 +63,19 @@ export const useSpotifyStore = defineStore('spotify', () => {
         }
     };
 
+    const seekToPosition = (positionMs) => {
+        if (player.value) {
+            return player.value.seek(positionMs).then(() => {
+                console.log(`Changed position to ${positionMs}ms`);
+            }).catch((error) => {
+                console.error('Failed to change position:', error);
+            });
+        } else {
+            console.error('Player is not initialized');
+            return Promise.reject('Player is not initialized');
+        }
+    };
+
     return {
         is_active,
         is_paused,
@@ -79,6 +92,7 @@ export const useSpotifyStore = defineStore('spotify', () => {
         nextTrack,
         previousTrack,
         pauseTrack,
-        resumeTrack
+        resumeTrack,
+        seekToPosition
     };
 });

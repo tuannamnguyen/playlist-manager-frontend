@@ -8,15 +8,12 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import SkipBackward from 'vue-material-design-icons/SkipBackward.vue';
 import SkipForward from 'vue-material-design-icons/SkipForward.vue';
 
-
-
 import { useSpotifyStore } from '../stores/spotify'
 import { storeToRefs } from 'pinia';
 
 const spotifyStore = useSpotifyStore()
 const { is_active, player, current_track } = storeToRefs(spotifyStore)
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
-
 
 let isHover = ref(false)
 let isTrackTimeCurrent = ref(null)
@@ -110,7 +107,7 @@ onMounted(async () => {
             player.value.getCurrentState().then((state) => {
                 if (state) {
                     const time = state.duration * (seeker.value.value / 100);
-                    player.value.seek(time);
+                    spotifyStore.seekToPosition(time);
                 }
             });
         });
@@ -128,7 +125,7 @@ onMounted(async () => {
             player.value.getCurrentState().then((state) => {
                 if (state) {
                     const time = state.duration * clickPosition;
-                    player.value.seek(time);
+                    spotifyStore.seekToPosition(time);
                     seeker.value.value = (100 / state.duration) * time;
                 }
             });
@@ -158,12 +155,9 @@ const updateTrackTime = () => {
 
 watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
     if (newIsPlaying) {
-        // Start updating track time
         const intervalId = setInterval(updateTrackTime, 1000);
-        // Store interval ID to clear it later
         spotifyStore.setIntervalId(intervalId);
     } else {
-        // Stop updating track time
         clearInterval(spotifyStore.intervalId);
     }
 })
