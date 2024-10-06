@@ -87,6 +87,7 @@ const initializeSpotifyPlayer = () => {
 
     spotifyPlayer.connect();
 }
+
 onMounted(async () => {
     const isAuthenticated = await checkAuthAndGetToken();
     if (!isAuthenticated) {
@@ -104,9 +105,10 @@ onMounted(async () => {
 
     if (seeker.value && seekerContainer.value) {
         seeker.value.addEventListener("change", function () {
-            player.value.getCurrentState().then((state) => {
+            spotifyStore.player.getCurrentState().then((state) => {
                 if (state) {
-                    const time = state.duration * (seeker.value.value / 100);
+                    const time = Math.floor(state.duration * (seeker.value.value / 100));
+                    console.log(`Seeking to: ${time}ms`);
                     spotifyStore.seekToPosition(time);
                 }
             });
@@ -122,11 +124,12 @@ onMounted(async () => {
 
         seekerContainer.value.addEventListener("click", function (e) {
             const clickPosition = (e.pageX - seekerContainer.value.offsetLeft) / seekerContainer.value.offsetWidth;
-            player.value.getCurrentState().then((state) => {
+            spotifyStore.player.getCurrentState().then((state) => {
                 if (state) {
-                    const time = state.duration * clickPosition;
+                    const time = Math.floor(state.duration * clickPosition);
+                    console.log(`Seeking to: ${time}ms`);
                     spotifyStore.seekToPosition(time);
-                    seeker.value.value = (100 / state.duration) * time;
+                    seeker.value.value = clickPosition * 100;
                 }
             });
         });
@@ -134,7 +137,7 @@ onMounted(async () => {
 })
 
 const updateTrackTime = () => {
-    player.value.getCurrentState().then((state) => {
+    spotifyStore.player.getCurrentState().then((state) => {
         if (state) {
             const currentTime = state.position;
             const totalTime = state.duration;
@@ -161,6 +164,7 @@ watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
         clearInterval(spotifyStore.intervalId);
     }
 })
+
 
 </script>
 
