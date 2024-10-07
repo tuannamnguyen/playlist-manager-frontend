@@ -7,12 +7,22 @@ const createPlaylist = async (playlistData) => {
     const newPlaylist = ref(null);
 
     try {
+        const formData = new FormData();
+
+        // Append text fields
+        formData.append('playlist_name', playlistData.playlist_name);
+        formData.append('playlist_description', playlistData.playlist_description);
+        formData.append('user_id', playlistData.user_id);
+        formData.append('user_name', playlistData.user_name);
+
+        // Append file if it exists
+        if (playlistData.playlist_cover_image) {
+            formData.append('playlist_cover_image', playlistData.playlist_cover_image);
+        }
+
         const response = await fetch(`${apiServerUrl}/api/playlists`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(playlistData),
+            body: formData,
         });
 
         const data = await response.json();
@@ -22,7 +32,7 @@ const createPlaylist = async (playlistData) => {
         }
 
         newPlaylist.value = data;
-        console.log(newPlaylist.value)
+        console.log('New playlist created:', newPlaylist.value);
     } catch (err) {
         console.error('Error in createPlaylist:', err);
         error.value = err.message || 'An unexpected error occurred';
