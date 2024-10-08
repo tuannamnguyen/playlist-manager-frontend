@@ -16,9 +16,11 @@ import Heart from 'vue-material-design-icons/Heart.vue';
 import Pause from 'vue-material-design-icons/Pause.vue';
 import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
+import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSongStore } from '../stores/song';
 import { useArtistInfo } from '@/composables/artistInformation';
+
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
@@ -220,12 +222,19 @@ const checkSpotifyAuthStatus = async () => {
 };
 
 
+const isConverting = ref(false);
+const conversionSuccess = ref(false);
+const conversionError = ref(null);
+
 const convertToSpotify = async () => {
     if (!isSpotifyLoggedIn.value) {
-        // Redirect to Spotify login or show a message
         console.log('Please log in to Spotify first');
         return;
     }
+
+    isConverting.value = true;
+    conversionSuccess.value = false;
+    conversionError.value = null;
 
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
@@ -241,10 +250,12 @@ const convertToSpotify = async () => {
 
         const result = await response.json();
         console.log('Playlist converted successfully:', result);
-        // Show success message to the user
+        conversionSuccess.value = true;
     } catch (error) {
         console.error('Error converting playlist:', error);
-        // Show error message to the user
+        conversionError.value = error.message || 'An error occurred during conversion';
+    } finally {
+        isConverting.value = false;
     }
 };
 
@@ -329,8 +340,12 @@ const handleArtistClick = (artistName) => {
                     <button type="button" @click="convertToSpotify" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isSpotifyLoggedIn">
-                        {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
+                    ]" :disabled="!isSpotifyLoggedIn || isConverting">
+                        <span v-if="!isConverting">
+                            {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
+                        </span>
+                        <Loading v-else class="animate-spin mr-2" :size="20" />
+                        <span v-if="isConverting">Converting...</span>
                     </button>
                 </div>
             </div>
@@ -474,6 +489,32 @@ const handleArtistClick = (artistName) => {
             </div>
         </div>
     </div>
+    <!-- Conversion Loading Modal -->
+    <div v-if="isConverting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
+            <Loading class="animate-spin mx-auto mb-4" :size="48" fillColor="#1DB954" />
+            <h2 class="text-2xl font-bold text-white mb-4">Converting Playlist to Spotify</h2>
+            <p class="text-gray-300">Please wait while we process your request...</p>
+        </div>
+    </div>
+
+    <!-- Conversion Result Modal -->
+    <div v-if="!isConverting && (conversionSuccess || conversionError)"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-4" :class="conversionSuccess ? 'text-green-500' : 'text-red-500'">
+                {{ conversionSuccess ? 'Conversion Successful!' : 'Conversion Failed' }}
+            </h2>
+            <p class="text-gray-300 mb-6">
+                {{ conversionSuccess ? 'Your playlist has been successfully converted to Spotify.' : conversionError }}
+            </p>
+            <button @click="conversionSuccess = false; conversionError = null"
+                class="bg-[#1DB954] text-white px-6 py-2 rounded-full font-bold">
+                Close
+            </button>
+        </div>
+    </div>
+
 </template>
 
 <style scoped>
@@ -482,5 +523,19 @@ const handleArtistClick = (artistName) => {
     height: 4px;
     background-color: rgb(189, 189, 189);
     border-radius: 100%;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
 }
 </style>
