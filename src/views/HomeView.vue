@@ -10,9 +10,13 @@ const playlists = ref([]);
 onMounted(async () => {
     try {
         const result = await getAllPlaylists();
-        playlists.value = result.playlists.value || [];
-        error.value = result.error.value;
-        console.log('Playlists in Home:', playlists.value); // Add this for debugging
+        if (result === null) {
+            error.value = "Unable to fetch playlists. Please try again later.";
+        } else {
+            playlists.value = result.playlists?.value || [];
+            error.value = result.error?.value;
+            console.log('Playlists in Home:', playlists.value); // Add this for debugging
+        }
     } catch (e) {
         error.value = "An unexpected error occurred";
         console.error(e);
@@ -20,8 +24,6 @@ onMounted(async () => {
         isPending.value = false;
     }
 });
-
-
 </script>
 
 <template>
@@ -34,7 +36,10 @@ onMounted(async () => {
 
         <div v-if="error" class="text-red-500">{{ error }}</div>
 
-        <div v-else-if="playlists.length === 0" class="text-white">Loading playlists...</div>
+        <div v-else-if="isPending" class="text-white">Loading playlists...</div>
+
+        <div v-else-if="playlists.length === 0" class="text-white">No playlists found. Create a new playlist to get
+            started!</div>
 
         <div v-else class="flex items-center flex-wrap">
             <router-link v-for="playlist in playlists" :key="playlist.playlist_id"

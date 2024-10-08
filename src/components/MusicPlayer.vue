@@ -8,15 +8,12 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import SkipBackward from 'vue-material-design-icons/SkipBackward.vue';
 import SkipForward from 'vue-material-design-icons/SkipForward.vue';
 
-
-
 import { useSpotifyStore } from '../stores/spotify'
 import { storeToRefs } from 'pinia';
 
 const spotifyStore = useSpotifyStore()
 const { is_active, player, current_track } = storeToRefs(spotifyStore)
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
-
 
 let isHover = ref(false)
 let isTrackTimeCurrent = ref(null)
@@ -90,6 +87,7 @@ const initializeSpotifyPlayer = () => {
 
     spotifyPlayer.connect();
 }
+
 onMounted(async () => {
     const isAuthenticated = await checkAuthAndGetToken();
     if (!isAuthenticated) {
@@ -107,10 +105,11 @@ onMounted(async () => {
 
     if (seeker.value && seekerContainer.value) {
         seeker.value.addEventListener("change", function () {
-            player.value.getCurrentState().then((state) => {
+            spotifyStore.player.getCurrentState().then((state) => {
                 if (state) {
-                    const time = state.duration * (seeker.value.value / 100);
-                    player.value.seek(time);
+                    const time = Math.floor(state.duration * (seeker.value.value / 100));
+                    console.log(`Seeking to: ${time}ms`);
+                    spotifyStore.seekToPosition(time);
                 }
             });
         });
@@ -125,11 +124,12 @@ onMounted(async () => {
 
         seekerContainer.value.addEventListener("click", function (e) {
             const clickPosition = (e.pageX - seekerContainer.value.offsetLeft) / seekerContainer.value.offsetWidth;
-            player.value.getCurrentState().then((state) => {
+            spotifyStore.player.getCurrentState().then((state) => {
                 if (state) {
-                    const time = state.duration * clickPosition;
-                    player.value.seek(time);
-                    seeker.value.value = (100 / state.duration) * time;
+                    const time = Math.floor(state.duration * clickPosition);
+                    console.log(`Seeking to: ${time}ms`);
+                    spotifyStore.seekToPosition(time);
+                    seeker.value.value = clickPosition * 100;
                 }
             });
         });
@@ -137,7 +137,7 @@ onMounted(async () => {
 })
 
 const updateTrackTime = () => {
-    player.value.getCurrentState().then((state) => {
+    spotifyStore.player.getCurrentState().then((state) => {
         if (state) {
             const currentTime = state.position;
             const totalTime = state.duration;
@@ -158,16 +158,12 @@ const updateTrackTime = () => {
 
 watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
     if (newIsPlaying) {
-        // Start updating track time
         const intervalId = setInterval(updateTrackTime, 1000);
-        // Store interval ID to clear it later
         spotifyStore.setIntervalId(intervalId);
     } else {
-        // Stop updating track time
         clearInterval(spotifyStore.intervalId);
     }
 })
-
 </script>
 
 <template>

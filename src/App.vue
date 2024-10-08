@@ -176,10 +176,12 @@ watch(() => user.value, (newUser) => {
             </ul>
             <div class="border-b border-b-gray-700"></div>
             <ul>
-                <li v-for="playlist in playlists" :key="playlist.playlist_id"
-                    class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">
-                    {{ playlist.playlist_name }}
-                </li>
+                <RouterLink v-for="playlist in playlists" :key="playlist.playlist_id"
+                    :to="{ name: 'PlaylistDetails', params: { id: playlist.playlist_id } }" class="block">
+                    <li class="font-semibold text-[13px] mt-3 text-gray-300 hover:text-white">
+                        {{ playlist.playlist_name }}
+                    </li>
+                </RouterLink>
             </ul>
         </div>
     </div>
