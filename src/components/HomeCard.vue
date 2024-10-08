@@ -12,7 +12,7 @@ const { image, title, subTitle, user } = toRefs(props)
 
 <template>
     <div class="bg-[#111111] p-4 rounded-md hover:bg-[#252525] cursor-pointer m-2">
-        <div class="aspect-square w-full overflow-hidden rounded-md">
+        <div class="w-40 h-40 mx-auto overflow-hidden rounded-md">
             <img class="w-full h-full object-cover" :src="image" :alt="title">
         </div>
         <div class="text-white pt-4 font-semibold text-[17px]">{{ title }}</div>

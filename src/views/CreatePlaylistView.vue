@@ -28,12 +28,13 @@ const handleSubmit = async () => {
     error.value = null;
 
     try {
-        // First, create the playlist
+        // Prepare playlist data including the image file
         const playlistData = {
             playlist_name: playlistName.value,
             playlist_description: playlistDescription.value,
             user_id: user.value.sub,
-            user_name: user.value.name
+            user_name: user.value.name,
+            playlist_cover_image: selectedImage.value // Include the image file
         };
 
         const { error: createError, newPlaylist } = await createPlaylist(playlistData);
@@ -51,16 +52,6 @@ const handleSubmit = async () => {
         // Check if the unrefed value is null or undefined
         if (!unrefedPlaylist) {
             throw new Error("Failed to create playlist: No playlist data returned");
-        }
-
-        // If playlist creation was successful and an image was selected, upload it
-        if (unrefedPlaylist.playlist_id && selectedImage.value) {
-            const { error: uploadError } = await uploadPlaylistImage(unrefedPlaylist.playlist_id, selectedImage.value);
-            const unrefedUploadError = unref(uploadError);
-
-            if (unrefedUploadError) {
-                console.error("Image upload failed:", unrefedUploadError);
-            }
         }
 
         // Redirect to the new playlist page or home page
