@@ -14,26 +14,25 @@ let volumeInput = ref(null);
 onMounted(async () => {
     // Initialize volume on component mount
     await spotifyStore.getVolume();
-
-    volumeInput.value.addEventListener("input", async (e) => {
-        await spotifyStore.setVolume(parseInt(e.currentTarget.value));
-    });
 });
 
-// Watch for volume changes from other components
-watch(volume, async (newVolume) => {
-    if (volumeInput.value && volumeInput.value.value !== newVolume.toString()) {
+const handleVolumeChange = async (event) => {
+    const newVolume = parseInt(event.target.value);
+    await spotifyStore.setVolume(newVolume);
+};
+
+// Watch for volume changes from other components or internal state changes
+watch(volume, (newVolume) => {
+    if (volumeInput.value) {
         volumeInput.value.value = newVolume;
     }
-});
+}, { immediate: true });
 
 const handleVolumeIconClick = async () => {
     if (volume.value > 0) {
-        // Store the current volume before muting
         volumeInput.value.dataset.lastVolume = volume.value;
         await spotifyStore.setVolume(0);
     } else {
-        // Restore the previous volume, or set to 50 if it was 0
         const lastVolume = parseInt(volumeInput.value.dataset.lastVolume) || 50;
         await spotifyStore.setVolume(lastVolume);
     }
@@ -47,7 +46,7 @@ const handleVolumeIconClick = async () => {
     </div>
     <div class="flex items-center ml-2 w-[150px] relative mt-2 mb-[23px]" @mouseenter="isHover = true"
         @mouseleave="isHover = false">
-        <input :value="volume" ref="volumeInput" type="range" min="0" max="100" class="
+        <input :value="volume" @input="handleVolumeChange" ref="volumeInput" type="range" min="0" max="100" class="
                 mt-[24px]
                 absolute
                 rounded-full

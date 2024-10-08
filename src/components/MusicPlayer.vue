@@ -164,8 +164,6 @@ watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
         clearInterval(spotifyStore.intervalId);
     }
 })
-
-
 </script>
 
 <template>
