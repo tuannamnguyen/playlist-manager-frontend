@@ -61,6 +61,31 @@ export const useSpotifyStore = defineStore('spotify', () => {
         }
     };
 
+    const getVolume = async () => {
+        if (player.value) {
+            try {
+                const state = await player.value.getState();
+                volume.value = state.volume * 100; // Spotify uses 0-1 scale, we use 0-100
+                return volume.value;
+            } catch (error) {
+                console.error('Failed to get volume:', error);
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const setVolume = async (newVolume) => {
+        if (player.value) {
+            try {
+                await player.value.setVolume(newVolume / 100); // Convert 0-100 to 0-1 scale
+                volume.value = newVolume;
+            } catch (error) {
+                console.error('Failed to set volume:', error);
+            }
+        }
+    };
+
     return {
         is_active,
         is_paused,
@@ -78,6 +103,8 @@ export const useSpotifyStore = defineStore('spotify', () => {
         previousTrack,
         pauseTrack,
         resumeTrack,
-        seekToPosition
+        seekToPosition,
+        getVolume,
+        setVolume,
     };
 });
