@@ -47,13 +47,22 @@ const isPending = ref(false);
 const playlist = ref({});
 const { user } = useAuth0();
 
+const sortBy = ref(null);
+const sortOrder = ref(null);
+const showSortMenu = ref(false);
+const sortOptions = [
+    { value: 's.song_name', label: 'Title' },
+    { value: 'al.album_name', label: 'Album' },
+    { value: 'pls.created_at', label: 'Date added' },
+];
+
 const fetchPlaylistData = async () => {
     try {
         const playlistResult = await getPlaylist(playlistId);
         playlist.value = playlistResult.playlist.value || {};
         error.value = playlistResult.error.value;
 
-        const result = await getSongsInPlaylist(playlistId);
+        const result = await getSongsInPlaylist(playlistId, sortBy.value, sortOrder.value);
         songs.value = result.songs.value || [];
         error.value = result.error.value;
     } catch (e) {
@@ -63,6 +72,24 @@ const fetchPlaylistData = async () => {
         isPending.value = false;
     }
 };
+
+const toggleSortMenu = () => {
+    showSortMenu.value = !showSortMenu.value;
+};
+
+const setSorting = (option) => {
+    if (sortBy.value === option) {
+        // If clicking the same option, toggle the order
+        sortOrder.value = sortOrder.value === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+        // If clicking a different option, set it and default to ASC
+        sortBy.value = option;
+        sortOrder.value = 'ASC';
+    }
+    showSortMenu.value = false;
+    fetchPlaylistData();
+};
+
 
 onMounted(async () => {
     await fetchPlaylistData();
@@ -357,7 +384,21 @@ const handleArtistClick = (artistName) => {
             <div class="w-[30px] text-right mr-4">#</div>
             <div class="flex-grow">Title</div>
             <div class="w-1/4">Album</div>
-            <div class="w-1/5">Date added</div>
+            <div class="w-1/5 relative">
+                <button @click="toggleSortMenu" class="flex items-center">
+                    Date added
+                    <ChevronDown :size="20" class="ml-1" />
+                </button>
+                <div v-if="showSortMenu" class="absolute top-full left-0 mt-1 bg-[#282828] rounded-md shadow-lg z-50">
+                    <div v-for="option in sortOptions" :key="option.value" @click="setSorting(option.value)"
+                        class="px-4 py-2 hover:bg-[#3E3E3E] cursor-pointer">
+                        {{ option.label }}
+                        <span v-if="sortBy === option.value" class="ml-2">
+                            {{ sortOrder === 'ASC' ? '↑' : '↓' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
             <div class="w-[100px] text-right flex items-center justify-end">
                 <ClockTimeThreeOutline fillColor="#FFFFFF" :size="18" />
             </div>
