@@ -47,13 +47,23 @@ const isPending = ref(false);
 const playlist = ref({});
 const { user } = useAuth0();
 
+const sortBy = ref(null);
+const sortOrder = ref(null);
+const showSortMenu = ref(false);
+
+const sortOptions = [
+    { value: 's.song_name', label: 'Title' },
+    { value: 'al.album_name', label: 'Album' },
+    { value: 'pls.created_at', label: 'Date added' },
+];
+
 const fetchPlaylistData = async () => {
     try {
         const playlistResult = await getPlaylist(playlistId);
         playlist.value = playlistResult.playlist.value || {};
         error.value = playlistResult.error.value;
 
-        const result = await getSongsInPlaylist(playlistId);
+        const result = await getSongsInPlaylist(playlistId, sortBy.value, sortOrder.value);
         songs.value = result.songs.value || [];
         error.value = result.error.value;
     } catch (e) {
@@ -63,6 +73,28 @@ const fetchPlaylistData = async () => {
         isPending.value = false;
     }
 };
+
+const toggleSortMenu = () => {
+    showSortMenu.value = !showSortMenu.value;
+};
+
+const setSorting = (option) => {
+    if (sortBy.value === option) {
+        sortOrder.value = sortOrder.value === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+        sortBy.value = option;
+        sortOrder.value = 'ASC';
+    }
+    showSortMenu.value = false;
+    fetchPlaylistData();
+};
+
+const currentSortLabel = computed(() => {
+    const option = sortOptions.find(opt => opt.value === sortBy.value);
+    return option ? option.label : 'Sort by';
+});
+
+
 
 onMounted(async () => {
     await fetchPlaylistData();
@@ -149,10 +181,9 @@ const formatArtists = (artists) => {
 const formatDuration = (ms) => {
     if (!ms) return '0:00';
     const minutes = Math.floor(ms / 60000);
-    const seconds = ((ms % 60000) / 1000).toFixed(0);
-    return `${minutes}:${seconds.padStart(2, '0')}`;
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
-
 const isSongSelected = (song) => {
     return selectedSongs.value.some(s => generateSongKey(s) === generateSongKey(song));
 };
@@ -337,6 +368,24 @@ const handleArtistClick = (artistName) => {
                         <Plus :size="20" class="mr-2" />
                         Add song to playlist
                     </button>
+                    <!-- Sort by button -->
+                    <div class="relative">
+                        <button @click="toggleSortMenu"
+                            class="flex items-center bg-[#282828] px-3 py-2 rounded-full text-white text-sm font-bold">
+                            {{ currentSortLabel }}
+                            <ChevronDown :size="20" class="ml-1" />
+                        </button>
+                        <div v-if="showSortMenu"
+                            class="absolute top-full right-0 mt-1 bg-[#282828] rounded-md shadow-lg z-50">
+                            <div v-for="option in sortOptions" :key="option.value" @click="setSorting(option.value)"
+                                class="px-4 py-2 hover:bg-[#3E3E3E] cursor-pointer whitespace-nowrap text-white">
+                                {{ option.label }}
+                                <span v-if="sortBy === option.value" class="ml-2">
+                                    {{ sortOrder === 'ASC' ? '↑' : '↓' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" @click="convertToSpotify" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
@@ -354,12 +403,14 @@ const handleArtistClick = (artistName) => {
         <div class="mt-6"></div>
         <!-- Updated song list header -->
         <div class="flex items-center justify-between px-4 pt-2 text-gray-400 text-sm">
-            <div class="w-[30px] text-right mr-4">#</div>
-            <div class="flex-grow">Title</div>
-            <div class="w-1/4">Album</div>
-            <div class="w-1/5">Date added</div>
-            <div class="w-[100px] text-right flex items-center justify-end">
-                <ClockTimeThreeOutline fillColor="#FFFFFF" :size="18" />
+            <div class="flex items-center flex-grow">
+                <div class="w-[40px] text-center">#</div>
+                <div class="flex-grow">Title</div>
+                <div class="w-1/4">Album</div>
+                <div class="w-1/6">Date added</div>
+                <div class="w-[80px] text-center flex items-center justify-center">
+                    <ClockTimeThreeOutline :size="16" />
+                </div>
             </div>
         </div>
         <div class="border-b border-b-[#2A2A2A] mt-2"></div>
@@ -368,7 +419,7 @@ const handleArtistClick = (artistName) => {
             <li v-for="(song, index) in songs" :key="song.song_id"
                 class="flex items-center justify-between rounded-md hover:bg-[#2A2929] px-4 py-2">
                 <div class="flex items-center w-full">
-                    <div class="text-gray-400 font-semibold w-[30px] text-right mr-4">
+                    <div class="text-gray-400 font-semibold w-[40px] text-center">
                         {{ index + 1 }}
                     </div>
                     <img :src="song.image_url" alt="Album Cover" class="w-10 h-10 mr-4 rounded">
@@ -389,14 +440,14 @@ const handleArtistClick = (artistName) => {
                     <div class="text-sm text-gray-400 w-1/4">
                         {{ song.album_name }}
                     </div>
-                    <div class="text-sm text-gray-400 w-1/5">
+                    <div class="text-sm text-gray-400 w-1/6">
                         {{ song.created_at ? new Date(song.created_at).toLocaleDateString() : 'N/A' }}
                     </div>
-                    <div class="text-sm text-gray-400 w-[100px] flex items-center justify-end">
-                        <span class="mr-2">{{ formatDuration(song.duration) }}</span>
-                        <div class="relative">
+                    <div class="text-sm text-gray-400 w-[80px] flex items-center justify-center">
+                        <span>{{ formatDuration(song.duration) }}</span>
+                        <div class="relative ml-2">
                             <button @click="toggleSongDropdown(song.song_id)" type="button" class="focus:outline-none">
-                                <DotsHorizontal fillColor="#FFFFFF" :size="20" />
+                                <DotsHorizontal fillColor="#FFFFFF" :size="16" />
                             </button>
                             <div v-if="showSongDropdown[song.song_id]"
                                 class="absolute right-0 bottom-full mb-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5 z-50">

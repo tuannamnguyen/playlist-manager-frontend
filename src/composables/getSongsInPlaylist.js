@@ -2,14 +2,29 @@ import { ref } from "vue";
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
-
-const getSongsInPlaylist = async (playlistId) => {
+const getSongsInPlaylist = async (playlistId, sortBy = null, sortOrder = null) => {
     const error = ref(null);
     const songs = ref([]);
-    const isPending = ref(false);
+    const isPending = ref(true);
 
     try {
-        const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/songs`);
+        const url = new URL(`${apiServerUrl}/api/playlists/${playlistId}/songs`);
+
+        // Only add sorting parameters if both sortBy and sortOrder are provided
+        if (sortBy && sortOrder) {
+            // Validate sort parameters
+            const validSortByValues = ['s.song_name', 'al.album_name', 'pls.created_at'];
+            const validSortOrderValues = ['ASC', 'DESC'];
+
+            if (validSortByValues.includes(sortBy) && validSortOrderValues.includes(sortOrder.toUpperCase())) {
+                url.searchParams.append('sort_by', sortBy);
+                url.searchParams.append('sort_order', sortOrder.toUpperCase());
+            } else {
+                console.warn('Invalid sorting parameters provided. Using default sorting.');
+            }
+        }
+
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch playlist songs');
         }
@@ -22,6 +37,6 @@ const getSongsInPlaylist = async (playlistId) => {
     }
 
     return { error, isPending, songs };
-}
+};
 
-export default getSongsInPlaylist
+export default getSongsInPlaylist;
