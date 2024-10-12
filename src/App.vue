@@ -17,7 +17,8 @@ const useSong = useSongStore()
 const { isPlaying, currentTrack } = storeToRefs(useSong)
 const { logout, user } = useAuth0();
 
-const apiServerUrl = import.meta.env.VITE_API_SERVER_URL; // Make sure this is defined in your .env file
+const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
+const developerToken = import.meta.env.APPLE_MUSIC_ACCESS_TOKEN;
 
 const handleLogout = () =>
     logout({
@@ -26,9 +27,24 @@ const handleLogout = () =>
         }
     });
 
+let musicKitInstance = null;
+
 onMounted(() => {
     checkSpotifyAuthStatus();
     isPlaying.value = false;
+
+    window.addEventListener('musickitloaded', () => {
+        window.MusicKit.configure({
+            developerToken: developerToken,
+            app: {
+                name: 'Playlist Manager',
+                build: '1.0',
+            },
+        });
+
+        musicKitInstance = window.MusicKit.getInstance();
+        console.log(musicKitInstance);
+    });
 })
 
 let openMenu = ref(false)
@@ -89,6 +105,31 @@ const handleSpotifyLogout = async () => {
     }
 };
 
+const isAppleMusicLoggedIn = ref(false);
+const musicUserToken = ref(null);
+
+const handleAppleMusicLogin = async () => {
+    if (!isAppleMusicLoggedIn.value) {
+        try {
+            await musicKitInstance.authorize();
+            musicUserToken.value = musicKitInstance.musicUserToken;
+            isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
+            console.log('Music User Token:', musicUserToken.value);
+            // You can perform additional actions with the token here
+        } catch (error) {
+            console.error('Error authorizing Apple Music:', error);
+            // Handle the error, e.g., show an error message to the user
+        }
+    }
+};
+
+const handleAppleMusicLogout = async () => {
+    if (isAppleMusicLoggedIn.value && musicKitInstance) {
+        await musicKitInstance.unauthorize();
+        isAppleMusicLoggedIn.value = false;
+    }
+};
+
 // Watch for changes in the user object
 watch(() => user.value, (newUser) => {
     if (newUser && newUser.sub) {
@@ -96,7 +137,6 @@ watch(() => user.value, (newUser) => {
     }
 }, { immediate: true });
 </script>
-
 
 <template>
     <div>
