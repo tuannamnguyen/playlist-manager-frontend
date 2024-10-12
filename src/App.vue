@@ -18,7 +18,7 @@ const { isPlaying, currentTrack } = storeToRefs(useSong)
 const { logout, user } = useAuth0();
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
-const developerToken = import.meta.env.APPLE_MUSIC_ACCESS_TOKEN;
+const developerToken = import.meta.env.VITE_APPLE_MUSIC_ACCESS_TOKEN;
 
 const handleLogout = () =>
     logout({
@@ -33,7 +33,7 @@ onMounted(() => {
     checkSpotifyAuthStatus();
     isPlaying.value = false;
 
-    window.addEventListener('musickitloaded', () => {
+    try {
         window.MusicKit.configure({
             developerToken: developerToken,
             app: {
@@ -41,9 +41,14 @@ onMounted(() => {
                 build: '1.0',
             },
         });
-
         musicKitInstance = window.MusicKit.getInstance();
-        console.log('MusicKit loaded:', musicKitInstance);  // Ensure instance is set
+        console.log('MusicKit loaded:', musicKitInstance);
+    } catch (error) {
+        console.error('Error configuring MusicKit:', error);
+    }
+
+    window.addEventListener('musickitloaded', () => {
+        console.log('musickitloaded event fired');
     });
 });
 
@@ -109,8 +114,9 @@ const isAppleMusicLoggedIn = ref(false);
 const musicUserToken = ref(null);
 
 const handleAppleMusicLogin = async () => {
+    console.log('Attempting Apple Music login...');
     if (!isAppleMusicLoggedIn.value) {
-        if (musicKitInstance) {  // Check if the instance is properly initialized
+        if (musicKitInstance) {
             try {
                 await musicKitInstance.authorize();
                 musicUserToken.value = musicKitInstance.musicUserToken;
@@ -120,7 +126,20 @@ const handleAppleMusicLogin = async () => {
                 console.error('Error authorizing Apple Music:', error);
             }
         } else {
-            console.error('MusicKit instance is not initialized yet.');
+            console.log('MusicKit instance not initialized yet');
+            // Wait for the MusicKit instance to be initialized
+            window.addEventListener('musickitloaded', async () => {
+                console.log('musickitloaded event fired inside login handler');
+                musicKitInstance = window.MusicKit.getInstance();
+                try {
+                    await musicKitInstance.authorize();
+                    musicUserToken.value = musicKitInstance.musicUserToken;
+                    isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
+                    console.log('Music User Token:', musicUserToken.value);
+                } catch (error) {
+                    console.error('Error authorizing Apple Music:', error);
+                }
+            });
         }
     }
 };
