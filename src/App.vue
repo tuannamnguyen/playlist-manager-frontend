@@ -138,6 +138,22 @@ watch(() => user.value, (newUser) => {
                     </div>
                 </div>
 
+                <div class="relative mr-4">
+                    <button @click="handleAppleMusicLogin"
+                        :class="isAppleMusicLoggedIn ? 'bg-[#FC3C44] text-white' : 'bg-white text-black'"
+                        class="px-4 py-2 rounded-full hover:opacity-90">
+                        {{ isAppleMusicLoggedIn ? 'Logged in to Apple Music' : 'Login to Apple Music' }}
+                    </button>
+                    <div v-if="isAppleMusicLoggedIn && showAppleMusicDropdown"
+                        class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-[#282828] ring-1 ring-black ring-opacity-5">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                            <a href="#"
+                                class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                role="menuitem" @click="handleAppleMusicLogout">Log out from Apple Music</a>
+                        </div>
+                    </div>
+                </div>
+
                 <button @click="openMenu = !openMenu" :class="openMenu ? 'bg-[#282828]' : 'bg-black'"
                     class="bg-black hover:bg-[#282828] rounded-full p-0.5 mr-8 mt-0.5 cursor-pointer">
                     <div class="flex items-center">
