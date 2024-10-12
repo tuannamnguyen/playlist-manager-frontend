@@ -43,9 +43,9 @@ onMounted(() => {
         });
 
         musicKitInstance = window.MusicKit.getInstance();
-        console.log(musicKitInstance);
+        console.log('MusicKit loaded:', musicKitInstance);  // Ensure instance is set
     });
-})
+});
 
 let openMenu = ref(false)
 
@@ -110,15 +110,17 @@ const musicUserToken = ref(null);
 
 const handleAppleMusicLogin = async () => {
     if (!isAppleMusicLoggedIn.value) {
-        try {
-            await musicKitInstance.authorize();
-            musicUserToken.value = musicKitInstance.musicUserToken;
-            isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
-            console.log('Music User Token:', musicUserToken.value);
-            // You can perform additional actions with the token here
-        } catch (error) {
-            console.error('Error authorizing Apple Music:', error);
-            // Handle the error, e.g., show an error message to the user
+        if (musicKitInstance) {  // Check if the instance is properly initialized
+            try {
+                await musicKitInstance.authorize();
+                musicUserToken.value = musicKitInstance.musicUserToken;
+                isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
+                console.log('Music User Token:', musicUserToken.value);
+            } catch (error) {
+                console.error('Error authorizing Apple Music:', error);
+            }
+        } else {
+            console.error('MusicKit instance is not initialized yet.');
         }
     }
 };
