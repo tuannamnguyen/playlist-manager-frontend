@@ -8,7 +8,7 @@ import searchSongs from '@/composables/search';
 import fetchLyrics from '@/composables/fetchLyrics';
 import { useAuth0 } from '@auth0/auth0-vue';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutline.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
@@ -25,7 +25,10 @@ import { useArtistInfo } from '@/composables/artistInformation';
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 
 
-const useSong = useSongStore()
+const useSong = useSongStore();
+
+
+
 const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
 
 const playFunc = () => {
@@ -99,6 +102,17 @@ const currentSortLabel = computed(() => {
 onMounted(async () => {
     await fetchPlaylistData();
     await checkSpotifyAuthStatus();
+    await checkAppleMusicAuthStatus();
+
+    if (window.MusicKit) {
+        musicKitEventSubscription = window.MusicKit.getInstance().addEventListener('authorizationStatusDidChange', checkAppleMusicAuthStatus);
+    }
+});
+
+onUnmounted(() => {
+    if (window.MusicKit && musicKitEventSubscription) {
+        window.MusicKit.getInstance().removeEventListener(musicKitEventSubscription);
+    }
 });
 
 const ownership = computed(() => {
@@ -188,11 +202,6 @@ const isSongSelected = (song) => {
     return selectedSongs.value.some(s => generateSongKey(s) === generateSongKey(song));
 };
 
-const showDropdown = ref(false);
-
-const toggleDropdown = () => {
-    showDropdown.value = !showDropdown.value;
-};
 
 const handleDeletePlaylist = async () => {
     if (confirm('Are you sure you want to delete this playlist?')) {
@@ -317,6 +326,58 @@ const handleArtistClick = (artistName) => {
     fetchArtistInfo(artistName);
 };
 
+const isAppleMusicLoggedIn = ref(false);
+
+const checkAppleMusicAuthStatus = async () => {
+    if (window.MusicKit) {
+        isAppleMusicLoggedIn.value = await window.MusicKit.getInstance().isAuthorized;
+    } else {
+        console.error('MusicKit not found');
+        isAppleMusicLoggedIn.value = false;
+    }
+};
+
+let musicKitEventSubscription = null;
+
+const convertToAppleMusic = async () => {
+    if (!isAppleMusicLoggedIn.value) {
+        console.log('Please log in to Apple Music first');
+        return;
+    }
+
+    isConverting.value = true;
+    conversionSuccess.value = false;
+    conversionError.value = null;
+
+    try {
+        const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/applemusic`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                playlist_name: playlist.value.playlist_name,
+                provider_metadata: {
+                    applemusic: {
+                        musicUserToken: window.MusicKit.getInstance().musicUserToken
+                    }
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to convert playlist');
+        }
+
+        const result = await response.json();
+        console.log('Playlist converted successfully:', result);
+        conversionSuccess.value = true;
+    } catch (error) {
+        console.error('Error converting playlist:', error);
+        conversionError.value = error.message || 'An error occurred during conversion';
+    } finally {
+        isConverting.value = false;
+    }
+};
 </script>
 
 <template>
@@ -392,6 +453,16 @@ const handleArtistClick = (artistName) => {
                     ]" :disabled="!isSpotifyLoggedIn || isConverting">
                         <span v-if="!isConverting">
                             {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
+                        </span>
+                        <Loading v-else class="animate-spin mr-2" :size="20" />
+                        <span v-if="isConverting">Converting...</span>
+                    </button>
+                    <button type="button" @click="convertToAppleMusic" :class="[
+                        'flex items-center px-4 py-2 rounded-full text-sm font-bold',
+                        isAppleMusicLoggedIn ? 'bg-[#ff2d55] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                    ]" :disabled="!isAppleMusicLoggedIn || isConverting">
+                        <span v-if="!isConverting">
+                            {{ isAppleMusicLoggedIn ? 'Convert to Apple Music' : 'Log in to Apple Music to Convert' }}
                         </span>
                         <Loading v-else class="animate-spin mr-2" :size="20" />
                         <span v-if="isConverting">Converting...</span>

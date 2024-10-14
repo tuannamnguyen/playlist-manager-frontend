@@ -1,21 +1,19 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, onMounted, watch } from 'vue';
+import { RouterLink, RouterView } from 'vue-router';
 import MenuItem from './components/MenuItem.vue';
-import MusicPlayer from './components/MusicPlayer.vue'
+import MusicPlayer from './components/MusicPlayer.vue';
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import { useAuth0 } from "@auth0/auth0-vue";
 import getAllPlaylists from './composables/getAllPlaylists';
-import { useAuthStore } from './stores/authStore';
 
-import { useSongStore } from './stores/song'
+import { useSongStore } from './stores/song';
 import { storeToRefs } from 'pinia';
 
 const useSong = useSongStore();
-const authStore = useAuthStore();
 const { isPlaying, currentTrack } = storeToRefs(useSong);
 const { logout, user } = useAuth0();
 
@@ -121,7 +119,6 @@ const handleAppleMusicLogin = async () => {
         if (musicKitInstance) {
             try {
                 const token = await musicKitInstance.authorize();
-                authStore.setAppleMusicToken(token); // Store the token in the auth store
                 isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
                 console.log('Music User Token:', token);
             } catch (error) {
@@ -135,7 +132,6 @@ const handleAppleMusicLogin = async () => {
                 musicKitInstance = window.MusicKit.getInstance();
                 try {
                     const token = await musicKitInstance.authorize();
-                    authStore.setAppleMusicToken(token); // Store the token in the auth store
                     isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
                     console.log('Music User Token:', token);
                 } catch (error) {
@@ -149,7 +145,6 @@ const handleAppleMusicLogin = async () => {
 const handleAppleMusicLogout = async () => {
     if (isAppleMusicLoggedIn.value && musicKitInstance) {
         await musicKitInstance.unauthorize();
-        authStore.clearAppleMusicToken(); // Clear the token from the auth store
         isAppleMusicLoggedIn.value = false;
     }
 };
