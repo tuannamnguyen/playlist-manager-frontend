@@ -9,12 +9,14 @@ import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
 import { useAuth0 } from "@auth0/auth0-vue";
 import getAllPlaylists from './composables/getAllPlaylists';
+import { useAuthStore } from './stores/authStore';
 
 import { useSongStore } from './stores/song'
 import { storeToRefs } from 'pinia';
 
-const useSong = useSongStore()
-const { isPlaying, currentTrack } = storeToRefs(useSong)
+const useSong = useSongStore();
+const authStore = useAuthStore();
+const { isPlaying, currentTrack } = storeToRefs(useSong);
 const { logout, user } = useAuth0();
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
