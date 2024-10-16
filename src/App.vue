@@ -29,7 +29,7 @@ const handleLogout = () =>
 
 let musicKitInstance = null;
 
-onMounted(() => {
+onMounted(async () => {
     checkSpotifyAuthStatus();
     isPlaying.value = false;
 
@@ -43,13 +43,22 @@ onMounted(() => {
         });
         musicKitInstance = window.MusicKit.getInstance();
         console.log('MusicKit loaded:', musicKitInstance);
+
+        // Check if user was previously logged in
+        const storedLoginState = localStorage.getItem('appleMusicLoginState');
+        if (storedLoginState === 'true') {
+            // Attempt to reauthorize
+            try {
+                await musicKitInstance.authorize();
+                isAppleMusicLoggedIn.value = true;
+            } catch (error) {
+                console.error('Failed to reauthorize Apple Music:', error);
+                localStorage.removeItem('appleMusicLoginState');
+            }
+        }
     } catch (error) {
         console.error('Error configuring MusicKit:', error);
     }
-
-    window.addEventListener('musickitloaded', () => {
-        console.log('musickitloaded event fired');
-    });
 });
 
 let openMenu = ref(false)
@@ -111,41 +120,26 @@ const handleSpotifyLogout = async () => {
 };
 
 const isAppleMusicLoggedIn = ref(false);
-const musicUserToken = ref(null);
 
 const handleAppleMusicLogin = async () => {
     console.log('Attempting Apple Music login...');
-    if (!isAppleMusicLoggedIn.value) {
-        if (musicKitInstance) {
-            try {
-                const token = await musicKitInstance.authorize();
-                isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
-                console.log('Music User Token:', token);
-            } catch (error) {
-                console.error('Error authorizing Apple Music:', error);
-            }
-        } else {
-            console.log('MusicKit instance not initialized yet');
-            // Wait for the MusicKit instance to be initialized
-            window.addEventListener('musickitloaded', async () => {
-                console.log('musickitloaded event fired inside login handler');
-                musicKitInstance = window.MusicKit.getInstance();
-                try {
-                    const token = await musicKitInstance.authorize();
-                    isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
-                    console.log('Music User Token:', token);
-                } catch (error) {
-                    console.error('Error authorizing Apple Music:', error);
-                }
-            });
+    if (!isAppleMusicLoggedIn.value && musicKitInstance) {
+        try {
+            const token = await musicKitInstance.authorize();
+            isAppleMusicLoggedIn.value = musicKitInstance.isAuthorized;
+            console.log('Music User Token:', token);
+            localStorage.setItem('appleMusicLoginState', 'true');
+        } catch (error) {
+            console.error('Error authorizing Apple Music:', error);
         }
     }
 };
 
 const handleAppleMusicLogout = async () => {
     if (isAppleMusicLoggedIn.value && musicKitInstance) {
-        await musicKitInstance.unauthorize();
+        await musicKitInstance.value.unauthorize();
         isAppleMusicLoggedIn.value = false;
+        localStorage.removeItem('appleMusicLoginState');
     }
 };
 
