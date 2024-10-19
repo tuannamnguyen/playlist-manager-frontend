@@ -8,6 +8,7 @@ import Pause from 'vue-material-design-icons/Pause.vue';
 import SkipBackward from 'vue-material-design-icons/SkipBackward.vue';
 import SkipForward from 'vue-material-design-icons/SkipForward.vue';
 
+import { useArtistInfo } from '@/composables/artistInformation';
 import { useSpotifyStore } from '../stores/spotify'
 import { storeToRefs } from 'pinia';
 
@@ -156,6 +157,12 @@ const updateTrackTime = () => {
     });
 }
 
+const { fetchArtistInfo } = useArtistInfo();
+const handleArtistClick = (artistName) => {
+    fetchArtistInfo(artistName);
+};
+
+
 watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
     if (newIsPlaying) {
         const intervalId = setInterval(updateTrackTime, 1000);
@@ -187,7 +194,8 @@ watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
                     <div class="text-[14px] text-white hover:underline cursor-pointer">
                         {{ current_track.name }}
                     </div>
-                    <div class="text-[11px] text-gray-500 hover:underline hover:text-white cursor-pointer">
+                    <div class="text-[11px] text-gray-500 hover:underline hover:text-white cursor-pointer"
+                        @click="handleArtistClick(current_track.artists[0].name)">
                         {{ current_track.artists[0].name }}
                     </div>
                 </div>
