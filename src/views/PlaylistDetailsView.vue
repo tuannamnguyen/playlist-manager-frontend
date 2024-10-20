@@ -7,41 +7,19 @@ import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
 import searchSongs from '@/composables/search';
 import fetchLyrics from '@/composables/fetchLyrics';
 import { useAuth0 } from '@auth0/auth0-vue';
-import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutline.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
-import Heart from 'vue-material-design-icons/Heart.vue';
-import Pause from 'vue-material-design-icons/Pause.vue';
-import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSongStore } from '../stores/song';
 import { useArtistInfo } from '@/composables/artistInformation';
 
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
-
-
-const useSong = useSongStore();
-
-
-
-const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
-
-const playFunc = () => {
-    if (currentTrack.value) {
-        useSong.playOrPauseThisSong(currentArtist.value, currentTrack.value)
-        return
-    }
-    useSong.playFromFirst()
-}
-
 const route = useRoute();
 const router = useRouter();
-
 const playlistId = route.params.id;
 
 const error = ref(null);
@@ -155,7 +133,7 @@ const toggleSongSelection = (song) => {
 const performSearch = async () => {
     if (searchTrack.value.trim() === '' && searchArtist.value.trim() === '') return;
 
-    const { error, isPending, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
+    const { error, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
 
     if (error.value) {
         console.error('Search error:', error.value);
@@ -168,7 +146,7 @@ const performSearch = async () => {
 const addSelectedSongsToPlaylist = async () => {
     if (selectedSongs.value.length === 0) return;
 
-    const { error, isPending, updatedPlaylist } = await addSongsToPlaylist(playlistId, selectedSongs.value);
+    const { error, updatedPlaylist } = await addSongsToPlaylist(playlistId, selectedSongs.value);
 
     if (error.value) {
         console.error('Error adding songs:', error.value);
@@ -406,13 +384,6 @@ const handleArtistClick = (artistName) => {
                 <div class="text-gray-400 text-sm mt-2 mb-2">Created by {{ playlist.user_name }}</div>
 
                 <div class="absolute flex gap-4 items-center justify-start bottom-0 mb-1.5">
-                    <button class="p-1 rounded-full bg-white" @click="playFunc()">
-                        <Play v-if="!isPlaying" fillColor="#181818" :size="25" />
-                        <Pause v-else fillColor="#181818" :size="25" />
-                    </button>
-                    <button type="button">
-                        <Heart fillColor="#1BD760" :size="30" />
-                    </button>
                     <div class="relative">
                         <button @click="togglePlaylistDropdown" type="button">
                             <DotsHorizontal fillColor="#FFFFFF" :size="25" />
