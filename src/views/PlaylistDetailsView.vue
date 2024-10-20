@@ -226,10 +226,6 @@ const deleteSongFromPlaylist = async (songId) => {
 // ---------------------CONVERSION--------------------------------
 
 // New refs for conversion states
-const isConverting = ref(false);
-const conversionSuccess = ref(false);
-const conversionError = ref(null);
-const convertingService = ref('');
 const isSpotifyLoggedIn = ref(false);
 const isAppleMusicLoggedIn = ref(false);
 let musicKitEventSubscription = null;
@@ -263,10 +259,6 @@ const convertToSpotify = async () => {
         return;
     }
 
-    isConverting.value = true;
-    conversionSuccess.value = false;
-    conversionError.value = null;
-
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
             method: 'POST',
@@ -295,10 +287,6 @@ const convertToAppleMusic = async () => {
         console.log('Please log in to Apple Music first');
         return;
     }
-
-    isConverting.value = true;
-    conversionSuccess.value = false;
-    conversionError.value = null;
 
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/applemusic`, {
@@ -339,7 +327,7 @@ const currentSongForLyrics = ref(null);
 const viewLyrics = async (song) => {
     currentSongForLyrics.value = song;
     showLyricsModal.value = true;
-    const { error, isPending, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
+    const { error, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
     if (error.value) {
         currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
     } else {
@@ -423,22 +411,14 @@ const handleArtistClick = (artistName) => {
                     <button type="button" @click="convertToSpotify" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isSpotifyLoggedIn || isConverting">
-                        <span v-if="!isConverting">
+                    ]" :disabled="!isSpotifyLoggedIn">
                             {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
-                        </span>
-                        <Loading v-else class="animate-spin mr-2" :size="20" />
-                        <span v-if="isConverting">Converting...</span>
                     </button>
                     <button type="button" @click="convertToAppleMusic" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isAppleMusicLoggedIn ? 'bg-[#ff2d55] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isAppleMusicLoggedIn || isConverting">
-                        <span v-if="!isConverting">
+                    ]" :disabled="!isAppleMusicLoggedIn">
                             {{ isAppleMusicLoggedIn ? 'Convert to Apple Music' : 'Log in to Apple Music to Convert' }}
-                        </span>
-                        <Loading v-else class="animate-spin mr-2" :size="20" />
-                        <span v-if="isConverting">Converting...</span>
                     </button>
                 </div>
             </div>
@@ -582,34 +562,6 @@ const handleArtistClick = (artistName) => {
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
-    <!-- Conversion Loading Modal -->
-    <div v-if="isConverting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
-            <Loading class="animate-spin mx-auto mb-4" :size="48" fillColor="#1DB954" />
-            <h2 class="text-2xl font-bold text-white mb-4">
-                Converting Playlist to {{ convertingService }}
-            </h2>
-            <p class="text-gray-300">Please wait while we process your request...</p>
-        </div>
-    </div>
-
-    <!-- Conversion Result Modal -->
-    <div v-if="!isConverting && (conversionSuccess || conversionError)"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
-            <h2 class="text-2xl font-bold mb-4" :class="conversionSuccess ? 'text-green-500' : 'text-red-500'">
-                {{ conversionSuccess ? 'Conversion Successful!' : 'Conversion Failed' }}
-            </h2>
-            <p class="text-gray-300 mb-6">
-                {{ conversionSuccess
-                    ? `Your playlist has been successfully converted to ${convertingService}.`
-                    : conversionError }}
-            </p>
-            <button @click="closeConversionModal" class="bg-[#1DB954] text-white px-6 py-2 rounded-full font-bold">
-                Close
-            </button>
         </div>
     </div>
 
