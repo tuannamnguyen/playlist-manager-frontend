@@ -7,41 +7,19 @@ import getSongsInPlaylist from '@/composables/getSongsInPlaylist';
 import searchSongs from '@/composables/search';
 import fetchLyrics from '@/composables/fetchLyrics';
 import { useAuth0 } from '@auth0/auth0-vue';
-import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutline.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
-import Heart from 'vue-material-design-icons/Heart.vue';
-import Pause from 'vue-material-design-icons/Pause.vue';
-import Play from 'vue-material-design-icons/Play.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
 import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSongStore } from '../stores/song';
 import { useArtistInfo } from '@/composables/artistInformation';
 
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
-
-
-const useSong = useSongStore();
-
-
-
-const { isPlaying, currentTrack, currentArtist } = storeToRefs(useSong)
-
-const playFunc = () => {
-    if (currentTrack.value) {
-        useSong.playOrPauseThisSong(currentArtist.value, currentTrack.value)
-        return
-    }
-    useSong.playFromFirst()
-}
-
 const route = useRoute();
 const router = useRouter();
-
 const playlistId = route.params.id;
 
 const error = ref(null);
@@ -155,7 +133,7 @@ const toggleSongSelection = (song) => {
 const performSearch = async () => {
     if (searchTrack.value.trim() === '' && searchArtist.value.trim() === '') return;
 
-    const { error, isPending, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
+    const { error, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
 
     if (error.value) {
         console.error('Search error:', error.value);
@@ -168,7 +146,7 @@ const performSearch = async () => {
 const addSelectedSongsToPlaylist = async () => {
     if (selectedSongs.value.length === 0) return;
 
-    const { error, isPending, updatedPlaylist } = await addSongsToPlaylist(playlistId, selectedSongs.value);
+    const { error, updatedPlaylist } = await addSongsToPlaylist(playlistId, selectedSongs.value);
 
     if (error.value) {
         console.error('Error adding songs:', error.value);
@@ -245,8 +223,13 @@ const deleteSongFromPlaylist = async (songId) => {
     }
 };
 
+// ---------------------CONVERSION--------------------------------
 
+// New refs for conversion states
 const isSpotifyLoggedIn = ref(false);
+const isAppleMusicLoggedIn = ref(false);
+let musicKitEventSubscription = null;
+
 
 const checkSpotifyAuthStatus = async () => {
     try {
@@ -261,20 +244,20 @@ const checkSpotifyAuthStatus = async () => {
     }
 };
 
-
-const isConverting = ref(false);
-const conversionSuccess = ref(false);
-const conversionError = ref(null);
+const checkAppleMusicAuthStatus = async () => {
+    if (window.MusicKit) {
+        isAppleMusicLoggedIn.value = await window.MusicKit.getInstance().isAuthorized;
+    } else {
+        console.error('MusicKit not found');
+        isAppleMusicLoggedIn.value = false;
+    }
+};
 
 const convertToSpotify = async () => {
     if (!isSpotifyLoggedIn.value) {
         console.log('Please log in to Spotify first');
         return;
     }
-
-    isConverting.value = true;
-    conversionSuccess.value = false;
-    conversionError.value = null;
 
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
@@ -299,55 +282,11 @@ const convertToSpotify = async () => {
     }
 };
 
-const showLyricsModal = ref(false);
-const currentLyrics = ref('');
-const currentSongForLyrics = ref(null);
-
-const viewLyrics = async (song) => {
-    currentSongForLyrics.value = song;
-    showLyricsModal.value = true;
-    const { error, isPending, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
-    if (error.value) {
-        currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
-    } else {
-        currentLyrics.value = lyrics.value.lyrics;
-    }
-};
-
-const closeLyricsModal = () => {
-    showLyricsModal.value = false;
-    currentLyrics.value = '';
-    currentSongForLyrics.value = null;
-};
-
-const { fetchArtistInfo } = useArtistInfo();
-
-const handleArtistClick = (artistName) => {
-    fetchArtistInfo(artistName);
-};
-
-const isAppleMusicLoggedIn = ref(false);
-
-const checkAppleMusicAuthStatus = async () => {
-    if (window.MusicKit) {
-        isAppleMusicLoggedIn.value = await window.MusicKit.getInstance().isAuthorized;
-    } else {
-        console.error('MusicKit not found');
-        isAppleMusicLoggedIn.value = false;
-    }
-};
-
-let musicKitEventSubscription = null;
-
 const convertToAppleMusic = async () => {
     if (!isAppleMusicLoggedIn.value) {
         console.log('Please log in to Apple Music first');
         return;
     }
-
-    isConverting.value = true;
-    conversionSuccess.value = false;
-    conversionError.value = null;
 
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/applemusic`, {
@@ -378,6 +317,35 @@ const convertToAppleMusic = async () => {
         isConverting.value = false;
     }
 };
+
+// -------------------------METADATA---------------------------------------
+
+const showLyricsModal = ref(false);
+const currentLyrics = ref('');
+const currentSongForLyrics = ref(null);
+
+const viewLyrics = async (song) => {
+    currentSongForLyrics.value = song;
+    showLyricsModal.value = true;
+    const { error, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
+    if (error.value) {
+        currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
+    } else {
+        currentLyrics.value = lyrics.value.lyrics;
+    }
+};
+
+const closeLyricsModal = () => {
+    showLyricsModal.value = false;
+    currentLyrics.value = '';
+    currentSongForLyrics.value = null;
+};
+
+const { fetchArtistInfo } = useArtistInfo();
+
+const handleArtistClick = (artistName) => {
+    fetchArtistInfo(artistName);
+};
 </script>
 
 <template>
@@ -404,13 +372,6 @@ const convertToAppleMusic = async () => {
                 <div class="text-gray-400 text-sm mt-2 mb-2">Created by {{ playlist.user_name }}</div>
 
                 <div class="absolute flex gap-4 items-center justify-start bottom-0 mb-1.5">
-                    <button class="p-1 rounded-full bg-white" @click="playFunc()">
-                        <Play v-if="!isPlaying" fillColor="#181818" :size="25" />
-                        <Pause v-else fillColor="#181818" :size="25" />
-                    </button>
-                    <button type="button">
-                        <Heart fillColor="#1BD760" :size="30" />
-                    </button>
                     <div class="relative">
                         <button @click="togglePlaylistDropdown" type="button">
                             <DotsHorizontal fillColor="#FFFFFF" :size="25" />
@@ -450,22 +411,14 @@ const convertToAppleMusic = async () => {
                     <button type="button" @click="convertToSpotify" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isSpotifyLoggedIn || isConverting">
-                        <span v-if="!isConverting">
+                    ]" :disabled="!isSpotifyLoggedIn">
                             {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
-                        </span>
-                        <Loading v-else class="animate-spin mr-2" :size="20" />
-                        <span v-if="isConverting">Converting...</span>
                     </button>
                     <button type="button" @click="convertToAppleMusic" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
                         isAppleMusicLoggedIn ? 'bg-[#ff2d55] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isAppleMusicLoggedIn || isConverting">
-                        <span v-if="!isConverting">
+                    ]" :disabled="!isAppleMusicLoggedIn">
                             {{ isAppleMusicLoggedIn ? 'Convert to Apple Music' : 'Log in to Apple Music to Convert' }}
-                        </span>
-                        <Loading v-else class="animate-spin mr-2" :size="20" />
-                        <span v-if="isConverting">Converting...</span>
                     </button>
                 </div>
             </div>
@@ -609,31 +562,6 @@ const convertToAppleMusic = async () => {
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
-    <!-- Conversion Loading Modal -->
-    <div v-if="isConverting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
-            <Loading class="animate-spin mx-auto mb-4" :size="48" fillColor="#1DB954" />
-            <h2 class="text-2xl font-bold text-white mb-4">Converting Playlist to Spotify</h2>
-            <p class="text-gray-300">Please wait while we process your request...</p>
-        </div>
-    </div>
-
-    <!-- Conversion Result Modal -->
-    <div v-if="!isConverting && (conversionSuccess || conversionError)"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
-            <h2 class="text-2xl font-bold mb-4" :class="conversionSuccess ? 'text-green-500' : 'text-red-500'">
-                {{ conversionSuccess ? 'Conversion Successful!' : 'Conversion Failed' }}
-            </h2>
-            <p class="text-gray-300 mb-6">
-                {{ conversionSuccess ? 'Your playlist has been successfully converted to Spotify.' : conversionError }}
-            </p>
-            <button @click="conversionSuccess = false; conversionError = null"
-                class="bg-[#1DB954] text-white px-6 py-2 rounded-full font-bold">
-                Close
-            </button>
         </div>
     </div>
 
