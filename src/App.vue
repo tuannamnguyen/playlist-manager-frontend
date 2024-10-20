@@ -80,6 +80,8 @@ const fetchPlaylists = async () => {
 
 
 const isSpotifyLoggedIn = ref(false);
+const showSpotifyDropdown = ref(false);
+const showAppleMusicDropdown = ref(false);
 
 const checkSpotifyAuthStatus = async () => {
     try {
@@ -97,9 +99,10 @@ const checkSpotifyAuthStatus = async () => {
 const handleSpotifyLogin = async () => {
     if (!isSpotifyLoggedIn.value) {
         window.location.href = `${apiServerUrl}/api/oauth/spotify`;
+    } else {
+        showSpotifyDropdown.value = !showSpotifyDropdown.value;
     }
 };
-
 const handleSpotifyLogout = async () => {
     try {
         const response = await fetch(`${apiServerUrl}/api/oauth/logout/spotify`, {
@@ -132,13 +135,16 @@ const handleAppleMusicLogin = async () => {
         } catch (error) {
             console.error('Error authorizing Apple Music:', error);
         }
+    } else {
+        showAppleMusicDropdown.value = !showAppleMusicDropdown.value;
     }
 };
 
 const handleAppleMusicLogout = async () => {
     if (isAppleMusicLoggedIn.value && musicKitInstance) {
-        await musicKitInstance.value.unauthorize();
+        await musicKitInstance.unauthorize();
         isAppleMusicLoggedIn.value = false;
+        showAppleMusicDropdown.value = false;
         localStorage.removeItem('appleMusicLoginState');
     }
 };
