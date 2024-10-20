@@ -245,8 +245,17 @@ const deleteSongFromPlaylist = async (songId) => {
     }
 };
 
+// ---------------------CONVERSION--------------------------------
 
+// New refs for conversion states
+const isConverting = ref(false);
+const conversionSuccess = ref(false);
+const conversionError = ref(null);
+const convertingService = ref('');
 const isSpotifyLoggedIn = ref(false);
+const isAppleMusicLoggedIn = ref(false);
+let musicKitEventSubscription = null;
+
 
 const checkSpotifyAuthStatus = async () => {
     try {
@@ -261,10 +270,14 @@ const checkSpotifyAuthStatus = async () => {
     }
 };
 
-
-const isConverting = ref(false);
-const conversionSuccess = ref(false);
-const conversionError = ref(null);
+const checkAppleMusicAuthStatus = async () => {
+    if (window.MusicKit) {
+        isAppleMusicLoggedIn.value = await window.MusicKit.getInstance().isAuthorized;
+    } else {
+        console.error('MusicKit not found');
+        isAppleMusicLoggedIn.value = false;
+    }
+};
 
 const convertToSpotify = async () => {
     if (!isSpotifyLoggedIn.value) {
@@ -298,46 +311,6 @@ const convertToSpotify = async () => {
         isConverting.value = false;
     }
 };
-
-const showLyricsModal = ref(false);
-const currentLyrics = ref('');
-const currentSongForLyrics = ref(null);
-
-const viewLyrics = async (song) => {
-    currentSongForLyrics.value = song;
-    showLyricsModal.value = true;
-    const { error, isPending, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
-    if (error.value) {
-        currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
-    } else {
-        currentLyrics.value = lyrics.value.lyrics;
-    }
-};
-
-const closeLyricsModal = () => {
-    showLyricsModal.value = false;
-    currentLyrics.value = '';
-    currentSongForLyrics.value = null;
-};
-
-const { fetchArtistInfo } = useArtistInfo();
-
-const handleArtistClick = (artistName) => {
-    fetchArtistInfo(artistName);
-};
-
-const isAppleMusicLoggedIn = ref(false);
-
-const checkAppleMusicAuthStatus = async () => {
-    if (window.MusicKit) {
-        isAppleMusicLoggedIn.value = await window.MusicKit.getInstance().isAuthorized;
-    } else {
-        console.error('MusicKit not found');
-        isAppleMusicLoggedIn.value = false;
-    }
-};
-
-let musicKitEventSubscription = null;
 
 const convertToAppleMusic = async () => {
     if (!isAppleMusicLoggedIn.value) {
@@ -377,6 +350,35 @@ const convertToAppleMusic = async () => {
     } finally {
         isConverting.value = false;
     }
+};
+
+// -------------------------METADATA---------------------------------------
+
+const showLyricsModal = ref(false);
+const currentLyrics = ref('');
+const currentSongForLyrics = ref(null);
+
+const viewLyrics = async (song) => {
+    currentSongForLyrics.value = song;
+    showLyricsModal.value = true;
+    const { error, isPending, lyrics } = await fetchLyrics(song.song_name, song.artist_names.join(', '));
+    if (error.value) {
+        currentLyrics.value = "Sorry, we couldn't fetch the lyrics for this song.";
+    } else {
+        currentLyrics.value = lyrics.value.lyrics;
+    }
+};
+
+const closeLyricsModal = () => {
+    showLyricsModal.value = false;
+    currentLyrics.value = '';
+    currentSongForLyrics.value = null;
+};
+
+const { fetchArtistInfo } = useArtistInfo();
+
+const handleArtistClick = (artistName) => {
+    fetchArtistInfo(artistName);
 };
 </script>
 
@@ -615,7 +617,9 @@ const convertToAppleMusic = async () => {
     <div v-if="isConverting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-[#282828] p-8 rounded-lg w-full max-w-md text-center">
             <Loading class="animate-spin mx-auto mb-4" :size="48" fillColor="#1DB954" />
-            <h2 class="text-2xl font-bold text-white mb-4">Converting Playlist to Spotify</h2>
+            <h2 class="text-2xl font-bold text-white mb-4">
+                Converting Playlist to {{ convertingService }}
+            </h2>
             <p class="text-gray-300">Please wait while we process your request...</p>
         </div>
     </div>
@@ -628,10 +632,11 @@ const convertToAppleMusic = async () => {
                 {{ conversionSuccess ? 'Conversion Successful!' : 'Conversion Failed' }}
             </h2>
             <p class="text-gray-300 mb-6">
-                {{ conversionSuccess ? 'Your playlist has been successfully converted to Spotify.' : conversionError }}
+                {{ conversionSuccess
+                    ? `Your playlist has been successfully converted to ${convertingService}.`
+                    : conversionError }}
             </p>
-            <button @click="conversionSuccess = false; conversionError = null"
-                class="bg-[#1DB954] text-white px-6 py-2 rounded-full font-bold">
+            <button @click="closeConversionModal" class="bg-[#1DB954] text-white px-6 py-2 rounded-full font-bold">
                 Close
             </button>
         </div>
