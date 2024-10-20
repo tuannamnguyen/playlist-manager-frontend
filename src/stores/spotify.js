@@ -64,7 +64,7 @@ export const useSpotifyStore = defineStore('spotify', () => {
     const getVolume = async () => {
         if (player.value) {
             try {
-                const state = await player.value.getState();
+                const state = await player.value.getState(); // TODO: check error getState is not a function
                 volume.value = state.volume * 100; // Spotify uses 0-1 scale, we use 0-100
                 return volume.value;
             } catch (error) {
