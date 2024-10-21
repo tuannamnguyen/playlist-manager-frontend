@@ -31,6 +31,8 @@ const { user } = useAuth0();
 const sortBy = ref(null);
 const sortOrder = ref(null);
 const showSortMenu = ref(false);
+const isConvertingSpotify = ref(false);
+const isConvertingAppleMusic = ref(false);
 
 const sortOptions = [
     { value: 's.song_name', label: 'Title' },
@@ -259,6 +261,7 @@ const convertToSpotify = async () => {
         return;
     }
 
+    isConvertingSpotify.value = true;
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/spotify`, {
             method: 'POST',
@@ -273,12 +276,10 @@ const convertToSpotify = async () => {
 
         const result = await response.json();
         console.log('Playlist converted successfully:', result);
-        conversionSuccess.value = true;
     } catch (error) {
         console.error('Error converting playlist:', error);
-        conversionError.value = error.message || 'An error occurred during conversion';
     } finally {
-        isConverting.value = false;
+        isConvertingSpotify.value = false;
     }
 };
 
@@ -288,6 +289,7 @@ const convertToAppleMusic = async () => {
         return;
     }
 
+    isConvertingAppleMusic.value = true;
     try {
         const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/convert/applemusic`, {
             method: 'POST',
@@ -309,15 +311,12 @@ const convertToAppleMusic = async () => {
 
         const result = await response.json();
         console.log('Playlist converted successfully:', result);
-        conversionSuccess.value = true;
     } catch (error) {
         console.error('Error converting playlist:', error);
-        conversionError.value = error.message || 'An error occurred during conversion';
     } finally {
-        isConverting.value = false;
+        isConvertingAppleMusic.value = false;
     }
 };
-
 // -------------------------METADATA---------------------------------------
 
 const showLyricsModal = ref(false);
@@ -410,16 +409,24 @@ const handleArtistClick = (artistName) => {
                     </div>
                     <button type="button" @click="convertToSpotify" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
-                        isSpotifyLoggedIn ? 'bg-[#1DB954] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isSpotifyLoggedIn">
-                            {{ isSpotifyLoggedIn ? 'Convert to Spotify' : 'Log in to Spotify to Convert' }}
+                        isSpotifyLoggedIn ? 'bg-[#1DB954] text-white' : 'bg-gray-500 text-gray-300',
+                        isConvertingSpotify ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    ]" :disabled="!isSpotifyLoggedIn || isConvertingSpotify">
+                        <Loading v-if="isConvertingSpotify" :size="20" class="mr-2 animate-spin" />
+                        {{ isConvertingSpotify ? 'Converting...' : (isSpotifyLoggedIn ? 'Convert to Spotify' :
+                            'Log in to Spotify to Convert') }}
                     </button>
+
                     <button type="button" @click="convertToAppleMusic" :class="[
                         'flex items-center px-4 py-2 rounded-full text-sm font-bold',
-                        isAppleMusicLoggedIn ? 'bg-[#ff2d55] text-white cursor-pointer' : 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                    ]" :disabled="!isAppleMusicLoggedIn">
-                            {{ isAppleMusicLoggedIn ? 'Convert to Apple Music' : 'Log in to Apple Music to Convert' }}
+                        isAppleMusicLoggedIn ? 'bg-[#ff2d55] text-white' : 'bg-gray-500 text-gray-300',
+                        isConvertingAppleMusic ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    ]" :disabled="!isAppleMusicLoggedIn || isConvertingAppleMusic">
+                        <Loading v-if="isConvertingAppleMusic" :size="20" class="mr-2 animate-spin" />
+                        {{ isConvertingAppleMusic ? 'Converting...' : (isAppleMusicLoggedIn ? 'Convert to Apple Music' :
+                            'Log in to Apple Music to Convert') }}
                     </button>
+
                 </div>
             </div>
         </div>
@@ -564,8 +571,6 @@ const handleArtistClick = (artistName) => {
             </div>
         </div>
     </div>
-
-    <!-- TODO: add conversion result for apple music -->
 
 </template>
 
