@@ -106,7 +106,7 @@ const handleSpotifyLogin = async () => {
 const handleSpotifyLogout = async () => {
     try {
         const response = await fetch(`${apiServerUrl}/api/oauth/logout/spotify`, {
-            method: 'POST',
+            method: 'GET',
             credentials: 'include',
         });
         if (response.ok) {
