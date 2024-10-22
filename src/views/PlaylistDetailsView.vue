@@ -12,6 +12,7 @@ import ClockTimeThreeOutline from 'vue-material-design-icons/ClockTimeThreeOutli
 import Close from 'vue-material-design-icons/Close.vue';
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue';
 import Plus from 'vue-material-design-icons/Plus.vue';
+import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useArtistInfo } from '@/composables/artistInformation';
