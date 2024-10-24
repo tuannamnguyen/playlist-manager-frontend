@@ -16,7 +16,7 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useArtistInfo } from '@/composables/artistInformation';
-
+import exportPlaylistToCsv from '@/composables/csv';
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 const route = useRoute();
@@ -382,6 +382,15 @@ const handleArtistClick = (artistName) => {
                                 <a href="#"
                                     class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
                                     role="menuitem" @click="handleDeletePlaylist">Delete Playlist</a>
+                                <a href="#"
+                                    class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                    role="menuitem" @click="async () => {
+                                        const { error } = await exportPlaylistToCsv(playlistId);
+                                        if (error.value) {
+                                            console.error('Error exporting CSV:', error.value);
+                                        }
+                                        showPlaylistDropdown = false;
+                                    }">Export to CSV</a>
                             </div>
                         </div>
                     </div>
@@ -415,7 +424,7 @@ const handleArtistClick = (artistName) => {
                     ]" :disabled="!isSpotifyLoggedIn || isConvertingSpotify">
                         <Loading v-if="isConvertingSpotify" :size="20" class="mr-2 animate-spin" />
                         {{ isConvertingSpotify ? 'Converting...' : (isSpotifyLoggedIn ? 'Convert to Spotify' :
-                            'Log in to Spotify to Convert') }}
+                        'Log in to Spotify to Convert') }}
                     </button>
 
                     <button type="button" @click="convertToAppleMusic" :class="[
@@ -425,7 +434,7 @@ const handleArtistClick = (artistName) => {
                     ]" :disabled="!isAppleMusicLoggedIn || isConvertingAppleMusic">
                         <Loading v-if="isConvertingAppleMusic" :size="20" class="mr-2 animate-spin" />
                         {{ isConvertingAppleMusic ? 'Converting...' : (isAppleMusicLoggedIn ? 'Convert to Apple Music' :
-                            'Log in to Apple Music to Convert') }}
+                        'Log in to Apple Music to Convert') }}
                     </button>
 
                 </div>
