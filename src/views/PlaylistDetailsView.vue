@@ -34,6 +34,7 @@ const sortOrder = ref(null);
 const showSortMenu = ref(false);
 const isConvertingSpotify = ref(false);
 const isConvertingAppleMusic = ref(false);
+const isSearching = ref(false);
 
 const sortOptions = [
     { value: 's.song_name', label: 'Title' },
@@ -136,13 +137,19 @@ const toggleSongSelection = (song) => {
 const performSearch = async () => {
     if (searchTrack.value.trim() === '' && searchArtist.value.trim() === '') return;
 
-    const { error, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
+    isSearching.value = true;
+    try {
+        const { error, searchResults: results } = await searchSongs(searchTrack.value, searchArtist.value);
 
-    if (error.value) {
-        console.error('Search error:', error.value);
-        // Handle error (e.g., show a notification to the user)
-    } else {
-        searchResults.value = results || [];
+        if (error.value) {
+            console.error('Search error:', error.value);
+        } else {
+            searchResults.value = results || [];
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+    } finally {
+        isSearching.value = false;
     }
 };
 
@@ -546,7 +553,14 @@ const handleArtistClick = (artistName) => {
                     <strong>Tip:</strong> For better conversion results, choose songs with an ISRC when available to
                     help make conversion process more precise.
                 </div>
-                <div class="max-h-80 overflow-y-auto">
+                <!-- Add loading indicator here -->
+                <div v-if="isSearching" class="flex flex-col items-center justify-center p-8 text-gray-400">
+                    <div class="w-8 h-8 border-4 border-[#1BD760] border-t-transparent rounded-full animate-spin mb-4">
+                    </div>
+                    <p class="text-sm">Searching for songs...</p>
+                </div>
+                <!-- Show results only when not searching -->
+                <div v-else class="max-h-80 overflow-y-auto">
                     <div v-for="song in searchResults.value" :key="generateSongKey(song)"
                         class="flex items-center justify-between py-2 hover:bg-[#3E3E3E] px-4 rounded">
                         <div class="flex items-center">
