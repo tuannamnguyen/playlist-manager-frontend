@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import MusicPlayerVolume from '../components/MusicPlayerVolume.vue'
 import Heart from 'vue-material-design-icons/Heart.vue';
 import PictureInPictureBottomRight from 'vue-material-design-icons/PictureInPictureBottomRight.vue';
@@ -56,6 +56,17 @@ const checkAuthAndGetToken = async () => {
     }
 }
 
+// Cleanup function to disconnect player and clear intervals
+const cleanup = () => {
+    if (spotifyStore.player) {
+        spotifyStore.player.disconnect();
+        console.log("disconnect spotify player successfully")
+    }
+    if (spotifyStore.intervalId) {
+        clearInterval(spotifyStore.intervalId);
+    }
+}
+
 const initializeSpotifyPlayer = () => {
     const spotifyPlayer = new window.Spotify.Player({
         name: 'Playlist Manager Web Playback SDK',
@@ -104,6 +115,10 @@ onMounted(async () => {
 
     window.onSpotifyWebPlaybackSDKReady = initializeSpotifyPlayer;
 
+    // Add event listeners for page visibility and unload
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', cleanup);
+
     if (seeker.value && seekerContainer.value) {
         seeker.value.addEventListener("change", function () {
             spotifyStore.player.getCurrentState().then((state) => {
@@ -137,6 +152,21 @@ onMounted(async () => {
     }
 })
 
+// Handle visibility change (tab switching)
+const handleVisibilityChange = () => {
+    if (document.hidden) {
+        // Tab is hidden, pause playback
+        spotifyStore.pauseTrack();
+    }
+}
+
+onUnmounted(() => {
+    // Clean up event listeners and player when component is destroyed
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('beforeunload', cleanup);
+    cleanup();
+})
+
 const updateTrackTime = () => {
     spotifyStore.player.getCurrentState().then((state) => {
         if (state) {
@@ -161,7 +191,6 @@ const { fetchArtistInfo } = useArtistInfo();
 const handleArtistClick = (artistName) => {
     fetchArtistInfo(artistName);
 };
-
 
 watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
     if (newIsPlaying) {
@@ -242,7 +271,6 @@ watch(() => spotifyStore.isPlaying(), (newIsPlaying) => {
                             :style="`width: ${range}%;`" :class="isHover ? 'bg-green-500' : 'bg-white'" />
                         <div
                             class="absolute h-[4px] z-[-0] mt-[6px] inset-y-0 left-0 w-full bg-gray-500 rounded-full" />
-
                     </div>
                     <div v-if="isTrackTimeTotal" class="text-white text-[12px] pl-2 pt-[11px]">{{ isTrackTimeTotal }}
                     </div>
