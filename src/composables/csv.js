@@ -47,4 +47,32 @@ const exportPlaylistToCsv = async (playlistId) => {
     return { error, isPending };
 };
 
-export default exportPlaylistToCsv;
+const importPlaylistFromCsv = async (playlistId, file) => {
+    const error = ref(null);
+    const isPending = ref(true);
+
+    try {
+        const formData = new FormData();
+        formData.append('playlist_songs_csv', file);
+
+        const response = await fetch(`${apiServerUrl}/api/playlists/${playlistId}/songs/csv`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to import playlist songs CSV');
+        }
+
+    } catch (err) {
+        console.error(`Error importing CSV to playlist ${playlistId}`, err);
+        error.value = 'Could not import playlist songs CSV';
+    } finally {
+        isPending.value = false;
+    }
+
+    return { error, isPending };
+};
+
+export { exportPlaylistToCsv, importPlaylistFromCsv };
