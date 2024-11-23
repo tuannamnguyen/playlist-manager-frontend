@@ -235,7 +235,7 @@ watch(() => user.value, (newUser) => {
 
         <div id="SideNav" class="h-[100%] p-6 w-[240px] fixed z-50 bg-black">
             <RouterLink to="/" class="text-white text-2xl font-semibold hover:underline cursor-pointer">
-                Playlist manager
+                TuneBridge
             </RouterLink>
             <div class="my-8"></div>
             <ul>

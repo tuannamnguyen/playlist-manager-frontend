@@ -69,7 +69,7 @@ const cleanup = () => {
 
 const initializeSpotifyPlayer = () => {
     const spotifyPlayer = new window.Spotify.Player({
-        name: 'Playlist Manager Web Playback SDK',
+        name: 'TuneBridge Web Playback SDK',
         getOAuthToken: cb => { cb(token.value); },
         volume: 0.5
     });
