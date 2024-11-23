@@ -16,7 +16,7 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import Loading from 'vue-material-design-icons/Loading.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useArtistInfo } from '@/composables/artistInformation';
-import exportPlaylistToCsv from '@/composables/csv';
+import { exportPlaylistToCsv, importPlaylistFromCsv } from '@/composables/csv';
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 const route = useRoute();
@@ -353,6 +353,31 @@ const { fetchArtistInfo } = useArtistInfo();
 const handleArtistClick = (artistName) => {
     fetchArtistInfo(artistName);
 };
+// -------------------------CSV---------------------------------------
+// Add this to your ref declarations at the top
+const fileInput = ref(null);
+
+// Add this method to handle file uploads
+const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const { error } = await importPlaylistFromCsv(playlistId, file);
+        if (error.value) {
+            console.error('Error importing CSV:', error.value);
+        } else {
+            // Refresh the playlist data after successful import
+            await fetchPlaylistData();
+        }
+    } catch (err) {
+        console.error('Error importing CSV:', err);
+    } finally {
+        // Reset the file input
+        event.target.value = '';
+        showPlaylistDropdown.value = false;
+    }
+};
 </script>
 
 <template>
@@ -398,6 +423,13 @@ const handleArtistClick = (artistName) => {
                                         }
                                         showPlaylistDropdown = false;
                                     }">Export to CSV</a>
+                                <input type="file" ref="fileInput" accept=".csv" class="hidden"
+                                    @change="handleFileUpload" />
+                                <a href="#"
+                                    class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#3E3E3E] hover:text-white"
+                                    role="menuitem" @click="$refs.fileInput.click()">
+                                    Import from CSV
+                                </a>
                             </div>
                         </div>
                     </div>
