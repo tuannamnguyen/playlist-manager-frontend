@@ -1,0 +1,4 @@
+[tools]
+terraform = "latest"
+node = "20.18.0"
+pre-commit = "latest"
