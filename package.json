@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 4040",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "node -r dotenv/config ./node_modules/.bin/vite --port 4040",
+    "build": "node -r dotenv/config ./node_modules/.bin/vite build",
+    "preview": "node -r dotenv/config ./node_modules/.bin/vite preview"
   },
   "dependencies": {
     "@auth0/auth0-vue": "^2.3.3",
+    "dotenv": "^16.4.5",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^4.0.2",
     "uniqolor": "^1.1.1",
