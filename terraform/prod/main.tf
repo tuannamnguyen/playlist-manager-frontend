@@ -18,6 +18,7 @@ provider "google" {
 }
 
 locals {
-  project_id = "playlist-manager-437214"
-  region     = "asia-southeast1"
+  project_id  = "playlist-manager-437214"
+  region      = "asia-southeast1"
+  domain_name = "tunebridge.sbs"
 }
