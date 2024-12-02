@@ -4,6 +4,11 @@ terraform {
       source  = "hashicorp/google"
       version = "6.4.0"
     }
+
+    porkbun = {
+      source  = "kyswtn/porkbun"
+      version = "0.1.2"
+    }
   }
 
   backend "gcs" {
