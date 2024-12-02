@@ -9,3 +9,8 @@ module "cloud-dns" {
 
   type = "public"
 }
+
+resource "porkbun_nameservers" "nameservers" {
+  domain      = local.domain_name
+  nameservers = [for ns in module.cloud-dns.name_servers : replace(ns, "/\\.$/", "")]
+}

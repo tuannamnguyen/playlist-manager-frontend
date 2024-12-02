@@ -27,3 +27,17 @@ locals {
   region      = "asia-southeast1"
   domain_name = "tunebridge.sbs"
 }
+
+
+variable "porkbun_api_key" {
+  type = string
+}
+
+variable "porkbun_secret_api_key" {
+  type = string
+}
+
+provider "porkbun" {
+  api_key        = var.porkbun_api_key
+  secret_api_key = var.porkbun_secret_api_key
+}
