@@ -7,10 +7,9 @@ module "static-assets_cloud-storage-static-website" {
   create_dns_entry    = false
 
   # optional
-  force_destroy_website = true
+  force_destroy_website            = true
   force_destroy_access_logs_bucket = true
-  enable_versioning = true
-  index_page = "${path.root}/../../dist/index.html"
-  website_location = "ASIA-SOUTHEAST2"
-  website_storage_class = "STANDARD"
+  enable_versioning                = true
+  website_location                 = "ASIA-SOUTHEAST2"
+  website_storage_class            = "STANDARD"
 }
