@@ -5,84 +5,46 @@ on:
     branches: ["main"]
 
 jobs:
-  push_to_registry:
-    name: Push Docker image to Docker Hub
+  build:
+    name: Build and apply Terraform
     runs-on: ubuntu-latest
     environment: production
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform/prod
+
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-        with:
-          images: tuannamnguyen290602/playlist-manager-frontend
-          tags: type=sha,format=long
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
 
-  # terraform:
-  #   name: Plan and apply Terraform
-  #   runs-on: ubuntu-latest
-  #   environment: production
-  #   needs: push_to_registry
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3.1.1
 
-  #   # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
-  #   defaults:
-  #     run:
-  #       shell: bash
-  #       working-directory: ./terraform/prod
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
 
-  #   steps:
-  #   # Checkout the repository to the GitHub Actions runner
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-
-  #   - id: 'auth'
-  #     uses: 'google-github-actions/auth@v2'
-  #     with:
-  #       credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-
-  #   - name: 'Set up Cloud SDK'
-  #     uses: 'google-github-actions/setup-gcloud@v2'
-
-  #   - name: 'Use gcloud CLI'
-  #     run: 'gcloud info'
-
-  #   # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-  #   - name: Setup Terraform
-  #     uses: hashicorp/setup-terraform@v3.1.1
-
-  #   # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-  #   - name: Terraform Init
-  #     run: terraform init
-
-  #     # On push to "main", build or change infrastructure according to Terraform configuration files
-  #     # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-  #   - name: Terraform Apply
-  #     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #     run: >
-  #      terraform apply -auto-approve -input=false
-  #      -var image_tag=sha-${{ github.sha }}
-  #      -var dotenv_key=${{ secrets.DOTENV_KEY }}
-  #      -var db_root_password=${{ secrets.DB_ROOT_PASSWORD }}
+      # On push to "main", build or change infrastructure according to Terraform configuration files
+      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: >
+       terraform apply -auto-approve -input=false
+       -var porkbun_api_key=${{ secrets.PORKBUN_API_KEY }}
+       -var porkbun_secret_api_key=${{ secrets.PORKBUN_SECRET_API_KEY }}
