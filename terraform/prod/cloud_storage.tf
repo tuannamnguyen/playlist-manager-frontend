@@ -43,6 +43,6 @@ resource "google_storage_bucket_object" "static_files" {
 
 resource "google_storage_bucket_iam_member" "public_rule" {
   bucket = google_storage_bucket.static_assets.name
-  role   = "roles/storage.legacyObjectReader"
+  role   = "roles/storage.objectViewer"
   member = "allUsers"
 }
