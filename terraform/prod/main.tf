@@ -29,15 +29,15 @@ locals {
 }
 
 
-variable "porkbun_api_key" {
-  type = string
-}
+# variable "porkbun_api_key" {
+#   type = string
+# }
 
-variable "porkbun_secret_api_key" {
-  type = string
-}
+# variable "porkbun_secret_api_key" {
+#   type = string
+# }
 
-provider "porkbun" {
-  api_key        = var.porkbun_api_key
-  secret_api_key = var.porkbun_secret_api_key
-}
+# provider "porkbun" {
+#   api_key        = var.porkbun_api_key
+#   secret_api_key = var.porkbun_secret_api_key
+# }
