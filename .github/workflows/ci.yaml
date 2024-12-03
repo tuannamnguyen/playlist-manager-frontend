@@ -21,6 +21,19 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.18.0
+
+    - name: Install dependency
+      run: npm install
+      working-directory: .
+
+    - name: Build assets
+      run: npm run build
+      working-directory: .
+
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
