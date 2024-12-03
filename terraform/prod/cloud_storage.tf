@@ -24,7 +24,7 @@ data "local_file" "files" {
 resource "google_storage_bucket_object" "static_files" {
   for_each = data.local_file.files
 
-  bucket = module.static-assets_cloud-storage-static-website.website_bucket_name
+  bucket = module.static-assets_http-load-balancer-website.website_bucket_name
   name   = each.key
   source = each.value.filename
   content_type = lookup(
