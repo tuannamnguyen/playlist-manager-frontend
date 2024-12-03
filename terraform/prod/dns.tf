@@ -8,6 +8,17 @@ module "cloud-dns" {
   project_id = local.project_id
 
   type = "public"
+
+  recordsets = [
+    {
+      name = "www"
+      type = "CNAME"
+      ttl  = 300
+      records = [
+        "${local.domain_name}."
+      ]
+    }
+  ]
 }
 
 resource "porkbun_nameservers" "nameservers" {
