@@ -16,5 +16,14 @@ module "static-assets_http-load-balancer-website" {
   website_location                 = "ASIA-SOUTHEAST2"
   website_storage_class            = "STANDARD"
   enable_ssl                       = true
-  ssl_certificate                  = ""
+  ssl_certificate                  = google_compute_managed_ssl_certificate.lb_default.self_link
+}
+
+resource "google_compute_managed_ssl_certificate" "lb_default" {
+  provider = google-beta
+  name     = "tunebridge-ssl-cert"
+
+  managed {
+    domains = [local.domain_name]
+  }
 }

@@ -9,6 +9,11 @@ terraform {
       source  = "kyswtn/porkbun"
       version = "0.1.2"
     }
+
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "6.12.0"
+    }
   }
 
   backend "gcs" {
@@ -18,6 +23,11 @@ terraform {
 }
 
 provider "google" {
+  project = local.project_id
+  region  = local.region
+}
+
+provider "google-beta" {
   project = local.project_id
   region  = local.region
 }
