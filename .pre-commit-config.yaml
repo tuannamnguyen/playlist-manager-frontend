@@ -14,3 +14,9 @@ repos:
           language: system
           types: [text]
           files: "\\.(jsx?|tsx?|c(js|ts)|m(js|ts)|d\\.(ts|cts|mts)|jsonc?|css)$"
+
+    - repo: https://github.com/antonbabenko/pre-commit-terraform
+      rev: v1.92.0
+      hooks:
+        - id: terraform_fmt
+        - id: terraform_validate
