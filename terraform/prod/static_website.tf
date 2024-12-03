@@ -3,8 +3,10 @@ module "static-assets_http-load-balancer-website" {
   version = "0.6.0"
 
   # insert the 2 required variables here
-  project             = local.project_id
-  website_domain_name = "www.${local.domain_name}"
+  project = local.project_id
+
+  # http load balancer module create A record instead of CNAME record
+  website_domain_name = local.domain_name
 
   # optional
   create_dns_entry      = true

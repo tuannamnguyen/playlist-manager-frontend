@@ -8,17 +8,6 @@ module "cloud-dns" {
   project_id = local.project_id
 
   type = "public"
-
-  recordsets = [
-    {
-      name = ""
-      ttl  = 300
-      type = "A"
-      records = [
-        module.static-assets_http-load-balancer-website.load_balancer_ip_address
-      ]
-    }
-  ]
 }
 
 resource "porkbun_nameservers" "nameservers" {
