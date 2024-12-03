@@ -50,3 +50,12 @@ resource "google_storage_bucket_iam_member" "public_rule" {
   role   = "roles/storage.objectViewer"
   member = "allUsers"
 }
+
+
+
+# Create LB backend buckets
+resource "google_compute_backend_bucket" "static_assets" {
+  name        = "tunebridge-backend-bucket"
+  bucket_name = google_storage_bucket.static_assets.name
+
+}

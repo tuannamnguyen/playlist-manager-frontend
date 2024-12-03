@@ -9,6 +9,11 @@ terraform {
       source  = "kyswtn/porkbun"
       version = "0.1.2"
     }
+
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "6.12.0"
+    }
   }
 
   backend "gcs" {
@@ -22,6 +27,11 @@ provider "google" {
   region  = local.region
 }
 
+provider "google-beta" {
+  project = local.project_id
+  region  = local.region
+}
+
 locals {
   project_id  = "playlist-manager-437214"
   region      = "asia-southeast1"
@@ -29,15 +39,15 @@ locals {
 }
 
 
-# variable "porkbun_api_key" {
-#   type = string
-# }
+variable "porkbun_api_key" {
+  type = string
+}
 
-# variable "porkbun_secret_api_key" {
-#   type = string
-# }
+variable "porkbun_secret_api_key" {
+  type = string
+}
 
-# provider "porkbun" {
-#   api_key        = var.porkbun_api_key
-#   secret_api_key = var.porkbun_secret_api_key
-# }
+provider "porkbun" {
+  api_key        = var.porkbun_api_key
+  secret_api_key = var.porkbun_secret_api_key
+}
