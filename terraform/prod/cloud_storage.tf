@@ -1,3 +1,11 @@
+resource "google_storage_bucket" "static_assets" {
+  name     = local.domain_name
+  location = "ASIA-SOUTHEAST2"
+
+  uniform_bucket_level_access = true
+  force_destroy               = true
+}
+
 locals {
   dist_directory = "${path.root}/../../dist/"
 
@@ -20,11 +28,10 @@ data "local_file" "files" {
   filename = "${local.dist_directory}${each.key}"
 }
 
-
 resource "google_storage_bucket_object" "static_files" {
   for_each = data.local_file.files
 
-  bucket = module.static-assets_cloud-storage-static-website.website_bucket_name
+  bucket = google_storage_bucket.static_assets.name
   name   = each.key
   source = each.value.filename
   content_type = lookup(
@@ -32,4 +39,10 @@ resource "google_storage_bucket_object" "static_files" {
     regex("[^.]+$", each.key),
     "application/octet-stream"
   )
+}
+
+resource "google_storage_bucket_iam_member" "public_rule" {
+  bucket = google_storage_bucket.static_assets.name
+  role   = "roles/storage.legacyObjectReader"
+  member = "allUsers"
 }
