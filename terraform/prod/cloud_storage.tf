@@ -33,9 +33,3 @@ resource "google_storage_bucket_object" "static_files" {
     "application/octet-stream"
   )
 }
-
-resource "google_storage_bucket_iam_member" "public_rule" {
-  bucket = module.static-assets_http-load-balancer-website.website_bucket_name
-  role   = "roles/storage.objectViewer"
-  member = "allUsers"
-}
