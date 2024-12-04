@@ -19,6 +19,7 @@ module "static-assets_http-load-balancer-website" {
   website_storage_class            = "STANDARD"
   enable_ssl                       = true
   ssl_certificate                  = google_compute_managed_ssl_certificate.lb_default.self_link
+  not_found_page                   = "index.html"
 }
 
 resource "google_compute_managed_ssl_certificate" "lb_default" {
