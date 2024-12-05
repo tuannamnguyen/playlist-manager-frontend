@@ -1,20 +1,16 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { useAuth0 } from "@auth0/auth0-vue";
+import { onMounted, ref, watch } from 'vue';
+import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
+import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
+import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
+import ChevronUp from 'vue-material-design-icons/ChevronUp.vue';
 import { RouterLink, RouterView } from 'vue-router';
 import MenuItem from './components/MenuItem.vue';
 import MusicPlayer from './components/MusicPlayer.vue';
-import ChevronUp from 'vue-material-design-icons/ChevronUp.vue';
-import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
-import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
-import ChevronLeft from 'vue-material-design-icons/ChevronLeft.vue';
-import { useAuth0 } from "@auth0/auth0-vue";
 import getAllPlaylists from './composables/getAllPlaylists';
 
-import { useSongStore } from './stores/song';
-import { storeToRefs } from 'pinia';
 
-const useSong = useSongStore();
-const { isPlaying, currentTrack } = storeToRefs(useSong);
 const { logout, user } = useAuth0();
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
@@ -31,8 +27,6 @@ let musicKitInstance = null;
 
 onMounted(async () => {
     checkSpotifyAuthStatus();
-    isPlaying.value = false;
-
     try {
         window.MusicKit.configure({
             developerToken: developerToken,
@@ -277,5 +271,5 @@ watch(() => user.value, (newUser) => {
         <div class="mb-[100px]"></div>
     </div>
 
-    <MusicPlayer v-if="currentTrack" />
+    <MusicPlayer/>
 </template>
