@@ -107,6 +107,12 @@ onMounted(async () => {
         return;
     }
 
+    // Load Spotify SDK
+    const script = document.createElement('script');
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    script.async = true;
+    document.body.appendChild(script);
+
     window.onSpotifyWebPlaybackSDKReady = initializeSpotifyPlayer;
 
     // Add event listeners for page visibility and unload

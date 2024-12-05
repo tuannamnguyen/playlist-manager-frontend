@@ -9,6 +9,8 @@ import './assets/main.css';
 
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
+console.log(import.meta.env);
+
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
